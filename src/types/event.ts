@@ -1,5 +1,5 @@
 export type EventType = 'networking' | 'bid' | 'certification' | 'conference';
-export type SourceType = 'sbe_dbe' | 'linkedin_company' | 'linkedin_personal' | 'trade_association' | 'government';
+export type SourceType = 'sbe_dbe' | 'linkedin_company' | 'linkedin_personal' | 'trade_association' | 'government' | 'gc_website' | 'eventbrite' | 'abc_chapter';
 
 export interface TradeEvent {
   id: string;
@@ -52,6 +52,9 @@ export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   linkedin_personal: 'LinkedIn (Post)',
   trade_association: 'Trade Association',
   government: 'Government Procurement',
+  gc_website: 'GC Outreach Page',
+  eventbrite: 'Eventbrite',
+  abc_chapter: 'ABC / Regional Org',
 };
 
 export const EVENT_TYPE_COLORS: Record<EventType, string> = {

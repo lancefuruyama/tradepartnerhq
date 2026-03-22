@@ -15,7 +15,7 @@ create table if not exists events (
   end_date      date,
   time_info     text,
   event_type    text not null check (event_type in ('networking','bid','certification','conference')),
-  source_type   text not null check (source_type in ('sbe_dbe','linkedin_company','linkedin_personal','trade_association','government')),
+  source_type   text not null check (source_type in ('sbe_dbe','linkedin_company','linkedin_personal','trade_association','government','gc_website','eventbrite','abc_chapter')),
   source_url    text,
   source_name   text,
   organization  text,
