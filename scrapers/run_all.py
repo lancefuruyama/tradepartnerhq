@@ -126,13 +126,7 @@ def main():
     all_events = [e for e in all_events if e.get("date", "") >= today]
     print(f"Date filter: {before_date} → {len(all_events)} events (removed {before_date - len(all_events)} past events)")
 
-    # Clean HTML entities from titles
-    import html as html_mod
-    for e in all_events:
-        if e.get("title"):
-            e["title"] = html_mod.unescape(e["title"])
-        if e.get("description"):
-            e["description"] = html_mod.unescape(e["description"])
+    # Note: title/description cleaning is handled by upsert_events() in config.py
 
     # Write to database
     if dry_run:

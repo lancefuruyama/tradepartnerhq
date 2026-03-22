@@ -2,6 +2,8 @@
 Shared configuration for all Trade Partner HQ scrapers.
 """
 import os
+import re
+import html as html_mod
 from dotenv import load_dotenv
 from supabase import create_client
 
@@ -112,11 +114,72 @@ def get_coords(city: str, state_code: str) -> tuple[float, float] | None:
     return CITY_COORDS.get((city, state_code))
 
 
+def clean_title(title: str) -> str:
+    """Clean up an event title: decode HTML entities, strip emojis,
+    remove redundant inline dates, and normalize whitespace."""
+    if not title:
+        return title
+    t = html_mod.unescape(title)
+    # Remove emojis
+    t = re.sub(
+        r'[\U0001F300-\U0001FAFF\U00002702-\U000027B0'
+        r'\U0000FE00-\U0000FE0F\U0001F900-\U0001F9FF]', '', t
+    )
+    # Strip inline "Month Day, Year ..." that got stuffed into the title
+    t = re.sub(
+        r'\s*(January|February|March|April|May|June|July|August|'
+        r'September|October|November|December)\s+\d{1,2},?\s*\d{4}.*',
+        '', t, flags=re.IGNORECASE,
+    )
+    # Strip trailing date patterns like " 4/3/2026" or " - 04/16/2026"
+    t = re.sub(r'\s*-?\s*\d{1,2}/\d{1,2}/\d{4}\s*$', '', t)
+    # Strip full date range titles like "3/22/2026 - 3/22/2027"
+    t = re.sub(r'^\d{1,2}/\d{1,2}/\d{4}\s*-\s*\d{1,2}/\d{1,2}/\d{4}\s*$', '', t)
+    # Strip "Mar 12 4:30 PM 16:30" style prefixes
+    t = re.sub(
+        r'^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+'
+        r'\d{1,2}:\d{2}\s*(?:AM|PM)?\s*\d{2}:\d{2}\s*', '', t, flags=re.IGNORECASE,
+    )
+    # Normalize whitespace and trim
+    t = re.sub(r'\s+', ' ', t).strip().rstrip(' -')
+    # Truncate excessively long titles (max 120 chars)
+    if len(t) > 120:
+        t = t[:117] + '...'
+    return t
+
+
+def clean_text(text: str) -> str:
+    """Clean description or other text fields."""
+    if not text:
+        return text
+    t = html_mod.unescape(text)
+    t = re.sub(
+        r'[\U0001F300-\U0001FAFF\U00002702-\U000027B0'
+        r'\U0000FE00-\U0000FE0F\U0001F900-\U0001F9FF]', '', t
+    )
+    t = re.sub(r'\s+', ' ', t).strip()
+    return t
+
+
 def upsert_events(events: list[dict]) -> int:
     """
     Upsert events into Supabase. Returns count of events upserted.
+    Cleans titles/descriptions before inserting.
     Uses the (title, date, organization) unique constraint for dedup.
     """
+    if not events:
+        return 0
+
+    # Clean all titles and descriptions before upserting
+    for e in events:
+        if e.get("title"):
+            e["title"] = clean_title(e["title"])
+        if e.get("description"):
+            e["description"] = clean_text(e["description"])
+
+    # Remove events with empty titles after cleaning
+    events = [e for e in events if e.get("title")]
+
     if not events:
         return 0
 
