@@ -44,7 +44,7 @@ export function Header({ isLoggedIn, userEmail, onLogin, onLogout }: HeaderProps
               TRADE PARTNER <span className="text-amber-500">HQ</span>
             </h1>
             <p className="text-[11px] text-zinc-400 tracking-widest uppercase">
-              SBE & Trade Outreach Aggregator
+              Where Trade Partners and General Contractors Connect!
             </p>
           </div>
         </div>

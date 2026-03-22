@@ -18,6 +18,7 @@ from scrape_linkedin import scrape_linkedin
 from scrape_gc_events import scrape_all_gc_events
 from scrape_eventbrite import scrape_all_eventbrite
 from scrape_abc_chapters import scrape_all_abc_chapters
+from scrape_enr_gc_events import scrape_all_enr_gc_events
 from config import upsert_events, is_excluded_event, clean_title
 
 
@@ -34,7 +35,7 @@ def main():
     results = {}
 
     # 1. SAM.gov (Federal procurement)
-    print("[1/7] SAM.gov Federal Opportunities")
+    print("[1/8] SAM.gov Federal Opportunities")
     try:
         sam_events = scrape_sam_gov()
         results["SAM.gov"] = len(sam_events)
@@ -45,7 +46,7 @@ def main():
         print(f"  → ERROR: {e}\n")
 
     # 2. State DOTs
-    print("[2/7] State DOT SBE/DBE Programs")
+    print("[2/8] State DOT SBE/DBE Programs")
     try:
         dot_events = scrape_all_state_dots()
         results["State DOTs"] = len(dot_events)
@@ -56,7 +57,7 @@ def main():
         print(f"  → ERROR: {e}\n")
 
     # 3. Trade Associations
-    print("[3/7] Trade Associations (AGC, ABC, NAHB)")
+    print("[3/8] Trade Associations (AGC, ABC, NAHB)")
     try:
         assoc_events = scrape_all_trade_associations()
         results["Trade Associations"] = len(assoc_events)
@@ -67,7 +68,7 @@ def main():
         print(f"  → ERROR: {e}\n")
 
     # 4. LinkedIn / GC Websites (Google search)
-    print("[4/7] LinkedIn & GC Websites")
+    print("[4/8] LinkedIn & GC Websites")
     try:
         linkedin_events = scrape_linkedin()
         results["LinkedIn/GC Sites"] = len(linkedin_events)
@@ -78,7 +79,7 @@ def main():
         print(f"  → ERROR: {e}\n")
 
     # 5. ENR Top 400 GC Outreach Pages
-    print("[5/7] GC Trade Partner Outreach (ENR Top 400)")
+    print("[5/8] GC Trade Partner Outreach (ENR Top 400)")
     try:
         gc_events = scrape_all_gc_events()
         results["GC Outreach Pages"] = len(gc_events)
@@ -89,7 +90,7 @@ def main():
         print(f"  → ERROR: {e}\n")
 
     # 6. Eventbrite Construction Events
-    print("[6/7] Eventbrite Construction Networking")
+    print("[6/8] Eventbrite Construction Networking")
     try:
         eb_events = scrape_all_eventbrite()
         results["Eventbrite"] = len(eb_events)
@@ -99,8 +100,19 @@ def main():
         results["Eventbrite"] = f"ERROR: {e}"
         print(f"  → ERROR: {e}\n")
 
-    # 7. ABC Chapters & Regional Orgs
-    print("[7/7] ABC Chapters & Regional Organizations")
+    # 7. ENR Top 400 GC Website Crawler
+    print("[7/8] ENR Top 400 GC Website Crawler")
+    try:
+        enr_events = scrape_all_enr_gc_events()
+        results["ENR Top 400 GCs"] = len(enr_events)
+        print(f"  → {len(enr_events)} events found\n")
+    except Exception as e:
+        enr_events = []
+        results["ENR Top 400 GCs"] = f"ERROR: {e}"
+        print(f"  → ERROR: {e}\n")
+
+    # 8. ABC Chapters & Regional Orgs
+    print("[8/8] ABC Chapters & Regional Organizations")
     try:
         abc_events = scrape_all_abc_chapters()
         results["ABC/Regional Orgs"] = len(abc_events)
@@ -112,7 +124,7 @@ def main():
 
     # Combine all events
     all_events = (sam_events + dot_events + assoc_events + linkedin_events
-                  + gc_events + eb_events + abc_events)
+                  + gc_events + eb_events + enr_events + abc_events)
 
     # Filter out events with no source_url (landing page link required)
     before_filter = len(all_events)
