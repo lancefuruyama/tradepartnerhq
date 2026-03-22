@@ -116,7 +116,7 @@ def main():
 
     # Filter out events with no source_url (landing page link required)
     before_filter = len(all_events)
-    all_events = [e for e in all_events if e.get("source_url") and e["source_url"].strip()]
+    all_events = [e for e in all_events if e.get("source_url") and e["source_url"].strip().startswith("http")]
     print(f"Filtered: {before_filter} → {len(all_events)} events (removed {before_filter - len(all_events)} with no link)")
 
     # Filter out past events
