@@ -22,6 +22,10 @@ export function Header({ isLoggedIn, userEmail, onLogin, onLogout }: HeaderProps
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [title, setTitle] = useState('');
+  const [phone, setPhone] = useState('');
   const [open, setOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,6 +34,10 @@ export function Header({ isLoggedIn, userEmail, onLogin, onLogout }: HeaderProps
     setOpen(false);
     setEmail('');
     setPassword('');
+    setFirstName('');
+    setLastName('');
+    setTitle('');
+    setPhone('');
   };
 
   return (
@@ -109,10 +117,53 @@ export function Header({ isLoggedIn, userEmail, onLogin, onLogout }: HeaderProps
                     />
                   </div>
                   {authMode === 'signup' && (
-                    <div>
-                      <Label htmlFor="company">Company Name</Label>
-                      <Input id="company" placeholder="Your trade or business name" />
-                    </div>
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="firstName">First Name</Label>
+                          <Input
+                            id="firstName"
+                            placeholder="First"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="lastName">Last Name</Label>
+                          <Input
+                            id="lastName"
+                            placeholder="Last"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="company">Company Name</Label>
+                        <Input id="company" placeholder="Your trade or business name" />
+                      </div>
+                      <div>
+                        <Label htmlFor="title">Title</Label>
+                        <Input
+                          id="title"
+                          placeholder="e.g. Project Manager, Estimator"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          placeholder="(555) 555-1234"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                        />
+                      </div>
+                    </>
                   )}
                   <Button
                     type="submit"
