@@ -194,6 +194,14 @@ CITY_COORDS = {
     ("Farmington", "CT"): (41.7198, -72.8320),
     ("Bellingham", "WA"): (48.7519, -122.4787),
     ("Peachtree Corners", "GA"): (33.9701, -84.2215),
+    # Batch 2 seed cities
+    ("Wisconsin Dells", "WI"): (43.6275, -89.7710),
+    ("Indian Wells", "CA"): (33.7178, -116.3453),
+    ("Dayton", "OH"): (39.7589, -84.1916),
+    ("Tacoma", "WA"): (47.2529, -122.4443),
+    ("Glendale", "AZ"): (33.5387, -112.1860),
+    ("Bonita Springs", "FL"): (26.3398, -81.7787),
+    ("Anaheim", "CA"): (33.8366, -117.9143),
 }
 
 
