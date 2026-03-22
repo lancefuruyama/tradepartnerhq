@@ -202,6 +202,20 @@ CITY_COORDS = {
     ("Glendale", "AZ"): (33.5387, -112.1860),
     ("Bonita Springs", "FL"): (26.3398, -81.7787),
     ("Anaheim", "CA"): (33.8366, -117.9143),
+    # Batch 3 seed cities
+    ("Reno", "NV"): (39.5296, -119.8138),
+    ("New Orleans", "LA"): (29.9511, -90.0715),
+    ("Rochester", "NY"): (43.1566, -77.6088),
+    ("Grapevine", "TX"): (32.9343, -97.0781),
+    # Batch 4 seed cities
+    ("Charleston", "WV"): (38.3498, -81.6326),
+    ("Bowling Green", "OH"): (41.3748, -83.6513),
+    ("Hanover", "MD"): (39.1929, -76.7241),
+    ("St. Paul", "MN"): (44.9537, -93.0900),
+    ("Concord", "NC"): (35.4088, -80.5795),
+    ("Tucson", "AZ"): (32.2226, -110.9747),
+    ("San Jose", "CA"): (37.3382, -121.8863),
+    ("Anchorage", "AK"): (61.2181, -149.9003),
 }
 
 
