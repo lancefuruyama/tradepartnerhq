@@ -26,8 +26,8 @@ export function Hero() {
             <span className="text-amber-500">Near You.</span>
           </h2>
           <p className="text-zinc-400 text-base md:text-lg mb-6 leading-relaxed max-w-xl">
-            The only free aggregator that pulls SBE/DBE outreach events, bid opportunities,
-            and trade partner networking from across the country — updated daily.
+            Your one-stop shop for finding GC outreach events, Meet the Primes,
+            and networking opportunities — so you can win more work. Free and updated weekly.
           </p>
           <div className="flex gap-3">
             <Button
