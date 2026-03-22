@@ -42,6 +42,12 @@ function MapClickHandler({ onMapClick }: MapClickHandlerProps) {
   return null;
 }
 
+// Continental US bounds: SW corner (24.5, -125) to NE corner (49.5, -66.5)
+const CONUS_BOUNDS: L.LatLngBoundsExpression = [
+  [24.396308, -125.0],  // Southwest
+  [49.384358, -66.93457], // Northeast
+];
+
 interface FlyToProps {
   center: [number, number] | null;
 }
@@ -50,7 +56,7 @@ function FlyTo({ center }: FlyToProps) {
   const map = useMap();
   useEffect(() => {
     if (center) {
-      map.flyTo(center, 12, { duration: 1 });
+      map.flyTo(center, 8, { duration: 1 });
     }
   }, [center, map]);
   return null;
@@ -71,8 +77,18 @@ export function EventMap({ events, centerLat, centerLng, radiusMiles, onMapClick
       <MapContainer
         center={[39.8283, -98.5795]}
         zoom={4}
+        minZoom={4}
+        maxZoom={4}
         style={{ height: '100%', width: '100%' }}
-        scrollWheelZoom={true}
+        scrollWheelZoom={false}
+        dragging={false}
+        zoomControl={false}
+        doubleClickZoom={false}
+        touchZoom={false}
+        boxZoom={false}
+        keyboard={false}
+        maxBounds={CONUS_BOUNDS}
+        maxBoundsViscosity={1.0}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

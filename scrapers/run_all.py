@@ -114,6 +114,26 @@ def main():
     all_events = (sam_events + dot_events + assoc_events + linkedin_events
                   + gc_events + eb_events + abc_events)
 
+    # Filter out events with no source_url (landing page link required)
+    before_filter = len(all_events)
+    all_events = [e for e in all_events if e.get("source_url") and e["source_url"].strip()]
+    print(f"Filtered: {before_filter} → {len(all_events)} events (removed {before_filter - len(all_events)} with no link)")
+
+    # Filter out past events
+    from datetime import date
+    today = date.today().isoformat()
+    before_date = len(all_events)
+    all_events = [e for e in all_events if e.get("date", "") >= today]
+    print(f"Date filter: {before_date} → {len(all_events)} events (removed {before_date - len(all_events)} past events)")
+
+    # Clean HTML entities from titles
+    import html as html_mod
+    for e in all_events:
+        if e.get("title"):
+            e["title"] = html_mod.unescape(e["title"])
+        if e.get("description"):
+            e["description"] = html_mod.unescape(e["description"])
+
     # Write to database
     if dry_run:
         print(f"DRY RUN — skipping database write")
@@ -126,6 +146,19 @@ def main():
         except Exception as e:
             print(f"  → DATABASE ERROR: {e}")
             upserted = 0
+
+    # Clean up: remove past events and linkless events from DB
+    if not dry_run:
+        print(f"\nCleaning up old events from database...")
+        try:
+            from config import supabase as sb
+            past_del = sb.table("events").delete().lt("date", today).execute()
+            print(f"  → Removed {len(past_del.data)} past events")
+            null_del = sb.table("events").delete().is_("source_url", "null").execute()
+            empty_del = sb.table("events").delete().eq("source_url", "").execute()
+            print(f"  → Removed {len(null_del.data) + len(empty_del.data)} linkless events")
+        except Exception as e:
+            print(f"  → Cleanup error: {e}")
 
     elapsed = time.time() - start
 

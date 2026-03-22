@@ -90,7 +90,11 @@ export function useEvents(filters: FilterState) {
 
   // Client-side search filter (text search always runs client-side)
   const filteredEvents = useMemo(() => {
-    let result = allEvents;
+    const today = new Date().toISOString().split('T')[0];
+    // Always filter out events with no source URL and past events
+    let result = allEvents.filter(
+      (e) => e.sourceUrl && e.sourceUrl.trim() !== '' && e.date >= today
+    );
 
     // Text search
     if (filters.searchQuery) {

@@ -12,7 +12,7 @@ import { useAuth } from './hooks/useAuth';
 import type { FilterState, EventType, SourceType } from './types/event';
 
 const ALL_EVENT_TYPES: EventType[] = ['networking', 'bid', 'certification', 'conference'];
-const ALL_SOURCE_TYPES: SourceType[] = ['sbe_dbe', 'linkedin_company', 'linkedin_personal', 'trade_association', 'government'];
+const ALL_SOURCE_TYPES: SourceType[] = ['sbe_dbe', 'linkedin_company', 'linkedin_personal', 'trade_association', 'government', 'gc_website', 'eventbrite', 'abc_chapter'];
 
 const defaultFilters: FilterState = {
   searchQuery: '',

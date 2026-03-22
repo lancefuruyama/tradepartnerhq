@@ -44,6 +44,9 @@ export async function fetchEvents(filters?: {
   centerLng?: number;
   radiusMiles?: number;
 }) {
+  // Today's date for filtering out past events
+  const today = new Date().toISOString().split('T')[0];
+
   // If radius search, use the PostGIS function
   if (filters?.centerLat && filters?.centerLng && filters?.radiusMiles) {
     const { data, error } = await supabase.rpc('events_within_radius', {
@@ -52,13 +55,20 @@ export async function fetchEvents(filters?: {
       radius_miles: filters.radiusMiles,
     });
     if (error) throw error;
-    return applyClientFilters(data || [], filters);
+    // Filter out past events and events with no source URL
+    const filtered = (data || []).filter(
+      (e: any) => e.source_url && e.source_url.trim() !== '' && e.date >= today
+    );
+    return applyClientFilters(filtered, filters);
   }
 
   // Otherwise use standard query
   let query = supabase
     .from('events')
     .select('*')
+    .not('source_url', 'is', null)
+    .neq('source_url', '')
+    .gte('date', today)
     .order('date', { ascending: true });
 
   if (filters?.stateCode) query = query.eq('state_code', filters.stateCode);
@@ -68,7 +78,7 @@ export async function fetchEvents(filters?: {
   if (filters?.eventTypes && filters.eventTypes.length > 0 && filters.eventTypes.length < 4) {
     query = query.in('event_type', filters.eventTypes);
   }
-  if (filters?.sourceTypes && filters.sourceTypes.length > 0 && filters.sourceTypes.length < 5) {
+  if (filters?.sourceTypes && filters.sourceTypes.length > 0 && filters.sourceTypes.length < 8) {
     query = query.in('source_type', filters.sourceTypes);
   }
   if (filters?.searchQuery) {
