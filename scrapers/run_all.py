@@ -18,7 +18,7 @@ from scrape_linkedin import scrape_linkedin
 from scrape_gc_events import scrape_all_gc_events
 from scrape_eventbrite import scrape_all_eventbrite
 from scrape_abc_chapters import scrape_all_abc_chapters
-from config import upsert_events
+from config import upsert_events, is_excluded_event, clean_title
 
 
 def main():
@@ -126,6 +126,11 @@ def main():
     all_events = [e for e in all_events if e.get("date", "") >= today]
     print(f"Date filter: {before_date} → {len(all_events)} events (removed {before_date - len(all_events)} past events)")
 
+    # Filter out awards, social outings, and other non-outreach events
+    before_excl = len(all_events)
+    all_events = [e for e in all_events if not is_excluded_event(clean_title(e.get("title", "")))]
+    print(f"Exclusion filter: {before_excl} → {len(all_events)} events (removed {before_excl - len(all_events)} awards/social)")
+
     # Note: title/description cleaning is handled by upsert_events() in config.py
 
     # Write to database
@@ -151,6 +156,15 @@ def main():
             null_del = sb.table("events").delete().is_("source_url", "null").execute()
             empty_del = sb.table("events").delete().eq("source_url", "").execute()
             print(f"  → Removed {len(null_del.data) + len(empty_del.data)} linkless events")
+            # Remove any awards/social events that slipped in previously
+            all_db = sb.table("events").select("id,title").execute()
+            excl_count = 0
+            for row in (all_db.data or []):
+                if is_excluded_event(row["title"]):
+                    sb.table("events").delete().eq("id", row["id"]).execute()
+                    excl_count += 1
+            if excl_count:
+                print(f"  → Removed {excl_count} awards/social outing events")
         except Exception as e:
             print(f"  → Cleanup error: {e}")
 

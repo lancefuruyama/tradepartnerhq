@@ -161,6 +161,32 @@ def clean_text(text: str) -> str:
     return t
 
 
+# Keywords that indicate an event is a social outing or awards ceremony
+# rather than a trade-partner/SBE outreach event.  Case-insensitive match
+# against the cleaned title.
+EXCLUDE_TITLE_KEYWORDS = [
+    "golf outing", "golf tournament", "golf classic", "golf scramble",
+    "tailgate", "tailgating",
+    "clay shoot", "skeet shoot", "trap shoot", "sporting clays",
+    "awards", "award ceremony", "award gala",
+    "holiday party", "christmas party", "holiday celebration",
+    "retirement party", "farewell party",
+    "happy hour", "cocktail hour", "wine tasting", "beer tasting",
+    "fishing tournament", "poker tournament",
+    "5k run", "fun run", "charity run",
+    "open house",
+    "bowling", "cornhole", "pickleball",
+]
+
+
+def is_excluded_event(title: str) -> bool:
+    """Return True if the event title matches an exclusion keyword."""
+    if not title:
+        return False
+    t = title.lower()
+    return any(kw in t for kw in EXCLUDE_TITLE_KEYWORDS)
+
+
 def upsert_events(events: list[dict]) -> int:
     """
     Upsert events into Supabase. Returns count of events upserted.
@@ -179,6 +205,9 @@ def upsert_events(events: list[dict]) -> int:
 
     # Remove events with empty titles after cleaning
     events = [e for e in events if e.get("title")]
+
+    # Remove awards, social outings, and other non-outreach events
+    events = [e for e in events if not is_excluded_event(e.get("title", ""))]
 
     if not events:
         return 0
