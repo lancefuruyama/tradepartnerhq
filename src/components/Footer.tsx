@@ -1,5 +1,3 @@
-import { HardHat } from 'lucide-react';
-
 export function Footer() {
   return (
     <footer id="about" className="bg-zinc-900 border-t-4 border-amber-500 mt-12">
