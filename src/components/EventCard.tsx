@@ -18,10 +18,9 @@ interface EventCardProps {
   isLoggedIn: boolean;
   isSaved: boolean;
   onSave: (id: string) => void;
-  onLocate: (lat: number, lng: number) => void;
 }
 
-export function EventCard({ event, isLoggedIn, isSaved, onSave, onLocate }: EventCardProps) {
+export function EventCard({ event, isLoggedIn, isSaved, onSave }: EventCardProps) {
   const typeColor = EVENT_TYPE_COLORS[event.eventType];
 
   return (
@@ -109,28 +108,9 @@ export function EventCard({ event, isLoggedIn, isSaved, onSave, onLocate }: Even
                 )}
               </div>
             )}
-
-            <a
-              href={event.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-amber-600 hover:text-amber-700 hover:underline transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Event Details
-            </a>
           </div>
 
           <div className="flex flex-col gap-1 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => onLocate(event.lat, event.lng)}
-              title="Show on map"
-            >
-              <MapPin className="w-4 h-4 text-zinc-400 hover:text-amber-600" />
-            </Button>
             {isLoggedIn && (
               <Button
                 variant="ghost"
@@ -144,6 +124,15 @@ export function EventCard({ event, isLoggedIn, isSaved, onSave, onLocate }: Even
                 />
               </Button>
             )}
+            <a
+              href={event.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-8 w-8 flex items-center justify-center"
+              title="View source"
+            >
+              <ExternalLink className="w-4 h-4 text-zinc-400 hover:text-amber-600" />
+            </a>
           </div>
         </div>
       </CardContent>
