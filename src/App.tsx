@@ -12,14 +12,14 @@ import { useAuth } from './hooks/useAuth';
 import type { FilterState, EventType, SourceType } from './types/event';
 
 const ALL_EVENT_TYPES: EventType[] = ['networking', 'bid', 'certification', 'conference'];
-const ALL_SOURCE_TYPES: SourceType[] = ['sbe_dbe', 'linkedin_company', 'linkedin_personal', 'trade_association', 'government', 'gc_website', 'eventbrite', 'abc_chapter'];
+const ALL_SOURCE_TYPES: SourceType[] = ['sbe_dbe', 'linkedin_company', 'linkedin_personal', 'trade_association', 'government'];
 
 const defaultFilters: FilterState = {
   searchQuery: '',
   stateCode: '',
   city: '',
-  eventTypes: ALL_EVENT_TYPES,
-  sourceTypes: ALL_SOURCE_TYPES,
+  eventTypes: [],
+  sourceTypes: [],
   radiusMiles: 100,
   centerLat: null,
   centerLng: null,
@@ -41,7 +41,6 @@ export default function App() {
 
   const [savedEventIds, setSavedEventIds] = useState<Set<string>>(new Set());
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
-  const [flyTo, setFlyTo] = useState<[number, number] | null>(null);
   const [sortBy, setSortBy] = useState<'date' | 'relevance'>('date');
 
   const handleFilterChange = useCallback((partial: Partial<FilterState>) => {
@@ -50,15 +49,6 @@ export default function App() {
 
   const handleClearFilters = useCallback(() => {
     setFilters(defaultFilters);
-  }, []);
-
-  const handleMapClick = useCallback((lat: number, lng: number) => {
-    setFilters((prev) => ({ ...prev, centerLat: lat, centerLng: lng }));
-  }, []);
-
-  const handleLocate = useCallback((lat: number, lng: number) => {
-    setFlyTo([lat, lng]);
-    document.getElementById('map')?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   const handleToggleSave = useCallback((id: string) => {
@@ -154,26 +144,7 @@ export default function App() {
         </div>
 
         <div id="map">
-          <EventMap
-            events={filteredEvents}
-            centerLat={filters.centerLat}
-            centerLng={filters.centerLng}
-            radiusMiles={filters.radiusMiles}
-            onMapClick={handleMapClick}
-            flyTo={flyTo}
-          />
-          {filters.centerLat && (
-            <p className="text-xs text-zinc-500 mt-1 ml-1">
-              Showing events within {filters.radiusMiles} miles of selected point.
-              Use the Filters panel to adjust radius.{' '}
-              <button
-                className="text-amber-600 hover:underline font-medium"
-                onClick={() => handleFilterChange({ centerLat: null, centerLng: null })}
-              >
-                Clear location pin
-              </button>
-            </p>
-          )}
+          <EventMap events={filteredEvents} />
         </div>
 
         <div className="flex items-center justify-between">
@@ -198,7 +169,6 @@ export default function App() {
               isLoggedIn={auth.isLoggedIn}
               isSaved={savedEventIds.has(event.id)}
               onSave={handleToggleSave}
-              onLocate={handleLocate}
             />
           ))}
           {filteredEvents.length === 0 && !loading && (
