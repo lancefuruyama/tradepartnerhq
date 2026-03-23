@@ -57,10 +57,12 @@ function deduplicateEvents(events: TradeEvent[]): TradeEvent[] {
     }
   }
   // Pass 2: dedup on normalized title alone (catches same event in different cities)
+  // When titles match, keep the event with the later date
   const seen2 = new Map<string, TradeEvent>();
   for (const event of seen1.values()) {
     const titleKey = normalizeTitle(event.title);
-    if (!seen2.has(titleKey)) {
+    const existing = seen2.get(titleKey);
+    if (!existing || event.date > existing.date) {
       seen2.set(titleKey, event);
     }
   }
