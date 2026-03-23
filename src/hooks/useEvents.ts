@@ -90,11 +90,7 @@ export function useEvents(filters: FilterState) {
 
   // Client-side search filter (text search always runs client-side)
   const filteredEvents = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    // Always filter out events with no valid source URL and past events
-    let result = allEvents.filter(
-      (e) => e.sourceUrl && e.sourceUrl.startsWith('http') && e.date >= today
-    );
+    let result = allEvents;
 
     // Text search
     if (filters.searchQuery) {
@@ -110,8 +106,8 @@ export function useEvents(filters: FilterState) {
     // If not using Supabase, apply all filters client-side
     if (!USE_SUPABASE) {
       result = result.filter((e) => {
-        if (!filters.eventTypes.includes(e.eventType as any)) return false;
-        if (!filters.sourceTypes.includes(e.sourceType as any)) return false;
+        if (filters.eventTypes.length > 0 && !filters.eventTypes.includes(e.eventType as any)) return false;
+        if (filters.sourceTypes.length > 0 && !filters.sourceTypes.includes(e.sourceType as any)) return false;
         if (filters.stateCode && e.stateCode !== filters.stateCode) return false;
         if (filters.city && e.city !== filters.city) return false;
         if (filters.dateFrom && e.date < filters.dateFrom) return false;
