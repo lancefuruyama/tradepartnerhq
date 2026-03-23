@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { fetchEvents } from '../lib/supabase';
 import { mockEvents } from '../data/mockEvents';
-import type { TradeEvent, FilterState } from '../types/event';
+import type { TradeEvent } from '../types/event';
 
 const USE_SUPABASE = !!(
   import.meta.env.VITE_SUPABASE_URL &&
@@ -35,12 +35,34 @@ function dbEventToTradeEvent(e: any): TradeEvent {
   };
 }
 
-export function useEvents(filters: FilterState) {
+/** Normalize a title for dedup comparison */
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/\s*[ââ\-]\s*.+$/, '')   // Strip suffixes after em-dash/en-dash/hyphen
+    .replace(/\b\d{4}\b/g, '')         // Strip year numbers
+    .replace(/[^a-z\s]/g, '')          // Keep only letters and spaces
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Remove duplicate events (same normalized title + city + date) */
+function deduplicateEvents(events: TradeEvent[]): TradeEvent[] {
+  const seen = new Map<string, TradeEvent>();
+  for (const event of events) {
+    const key = `${normalizeTitle(event.title)}|${event.city.toLowerCase()}|${event.date}`;
+    if (!seen.has(key)) {
+      seen.set(key, event);
+    }
+  }
+  return Array.from(seen.values());
+}
+
+export function useEvents() {
   const [allEvents, setAllEvents] = useState<TradeEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch events from Supabase or use mock data
   useEffect(() => {
     let cancelled = false;
 
@@ -53,17 +75,7 @@ export function useEvents(filters: FilterState) {
 
       setLoading(true);
       try {
-        const data = await fetchEvents({
-          stateCode: filters.stateCode || undefined,
-          city: filters.city || undefined,
-          eventTypes: filters.eventTypes,
-          sourceTypes: filters.sourceTypes,
-          dateFrom: filters.dateFrom || undefined,
-          dateTo: filters.dateTo || undefined,
-          centerLat: filters.centerLat || undefined,
-          centerLng: filters.centerLng || undefined,
-          radiusMiles: filters.radiusMiles,
-        });
+        const data = await fetchEvents();
         if (!cancelled) {
           setAllEvents(data.map(dbEventToTradeEvent));
           setError(null);
@@ -72,7 +84,6 @@ export function useEvents(filters: FilterState) {
         if (!cancelled) {
           console.error('Failed to fetch events:', err);
           setError(err.message);
-          // Fallback to mock data
           setAllEvents(mockEvents);
         }
       } finally {
@@ -82,56 +93,13 @@ export function useEvents(filters: FilterState) {
 
     load();
     return () => { cancelled = true; };
-  }, [
-    filters.stateCode, filters.city, filters.eventTypes, filters.sourceTypes,
-    filters.dateFrom, filters.dateTo, filters.centerLat, filters.centerLng,
-    filters.radiusMiles,
-  ]);
+  }, []);
 
-  // Client-side search filter (text search always runs client-side)
-  const filteredEvents = useMemo(() => {
-    let result = allEvents;
+  const events = useMemo(() => {
+    const deduped = deduplicateEvents(allEvents);
+    deduped.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return deduped;
+  }, [allEvents]);
 
-    // Text search
-    if (filters.searchQuery) {
-      const q = filters.searchQuery.toLowerCase();
-      result = result.filter((e) => {
-        const searchable = [e.title, e.description, e.organization, e.city, e.state, ...e.tags]
-          .join(' ')
-          .toLowerCase();
-        return searchable.includes(q);
-      });
-    }
-
-    // If not using Supabase, apply all filters client-side
-    if (!USE_SUPABASE) {
-      result = result.filter((e) => {
-        if (filters.eventTypes.length > 0 && !filters.eventTypes.includes(e.eventType as any)) return false;
-        if (filters.sourceTypes.length > 0 && !filters.sourceTypes.includes(e.sourceType as any)) return false;
-        if (filters.stateCode && e.stateCode !== filters.stateCode) return false;
-        if (filters.city && e.city !== filters.city) return false;
-        if (filters.dateFrom && e.date < filters.dateFrom) return false;
-        if (filters.dateTo && e.date > filters.dateTo) return false;
-        if (filters.centerLat && filters.centerLng) {
-          const dist = haversineDistance(filters.centerLat, filters.centerLng, e.lat, e.lng);
-          if (dist > filters.radiusMiles) return false;
-        }
-        return true;
-      });
-    }
-
-    result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    return result;
-  }, [allEvents, filters]);
-
-  return { events: filteredEvents, allEvents, loading, error, isLive: USE_SUPABASE };
-}
-
-function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 3959;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return { events, allEvents, loading, error, isLive: USE_SUPABASE };
 }
