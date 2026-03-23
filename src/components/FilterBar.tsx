@@ -3,7 +3,6 @@ import { EVENT_TYPE_LABELS, SOURCE_TYPE_LABELS, US_STATES } from '../types/event
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import {
   Select,
   SelectContent,
@@ -28,23 +27,22 @@ export function FilterBar({ filters, onFilterChange, onClearFilters, events }: F
     const stateEvents = filters.stateCode
       ? events.filter((e) => e.stateCode === filters.stateCode)
       : events;
-    return [...new Set(stateEvents.map((e) => e.city).filter(Boolean))].sort();
+    return [...new Set(stateEvents.map((e) => e.city))].sort();
   }, [events, filters.stateCode]);
 
   const activeFilterCount =
     (filters.searchQuery ? 1 : 0) +
     (filters.stateCode ? 1 : 0) +
     (filters.city ? 1 : 0) +
-    (filters.eventTypes.length < 4 ? 1 : 0) +
-    (filters.sourceTypes.length < 5 ? 1 : 0) +
-    (filters.radiusMiles < 500 && filters.centerLat ? 1 : 0);
+    (filters.eventTypes.length > 0 ? 1 : 0) +
+    (filters.sourceTypes.length > 0 ? 1 : 0);
 
   const toggleEventType = (type: EventType) => {
     const current = filters.eventTypes;
     const updated = current.includes(type)
       ? current.filter((t) => t !== type)
       : [...current, type];
-    onFilterChange({ eventTypes: updated.length > 0 ? updated : [type] });
+    onFilterChange({ eventTypes: updated });
   };
 
   const toggleSourceType = (type: SourceType) => {
@@ -52,7 +50,7 @@ export function FilterBar({ filters, onFilterChange, onClearFilters, events }: F
     const updated = current.includes(type)
       ? current.filter((t) => t !== type)
       : [...current, type];
-    onFilterChange({ sourceTypes: updated.length > 0 ? updated : [type] });
+    onFilterChange({ sourceTypes: updated });
   };
 
   const eventTypeColors: Record<EventType, string> = {
@@ -172,25 +170,6 @@ export function FilterBar({ filters, onFilterChange, onClearFilters, events }: F
               ))}
             </div>
           </div>
-
-          {filters.centerLat && (
-            <div>
-              <Label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 block">
-                Radius: {filters.radiusMiles} miles
-              </Label>
-              <Slider
-                value={[filters.radiusMiles]}
-                onValueChange={([v]) => onFilterChange({ radiusMiles: v })}
-                min={10}
-                max={500}
-                step={10}
-                className="w-full max-w-sm"
-              />
-              <p className="text-xs text-zinc-400 mt-1">
-                Click on the map to set your center point, then adjust the radius.
-              </p>
-            </div>
-          )}
 
           <div className="flex gap-3">
             <div className="flex-1">
