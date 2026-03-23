@@ -9,55 +9,128 @@ const CONUS_BOUNDS: L.LatLngBoundsExpression = [
   [24.396308, -125.0], // SW corner
   [49.384358, -66.93457], // NE corner
 ];
-ËÈ^Y][X\Ù\XÛÛ\ÜÝYHÚ][\Â[]H
-XÛÛY][ÝÝ\H\È[JKÙÙ]XÛÛ\ÂXÛÛY][Y\ÙSÜ[ÛÊÂXÛÛ][U\	ÚÎËØÙËÛÝY\KÛÛKØZ^ÛXËÛXY]ÌKKÚ[XYÙ\ËÛX\Ù\ZXÛÛLÉËXÛÛ\	ÚÎËØÙËÛÝY\KÛÛKØZ^ÛXËÛXY]ÌKKÚ[XYÙ\ËÛX\Ù\ZXÛÛÉËÚYÝÕ\	ÚÎËØÙËÛÝY\KÛÛKØZ^ÛXËÛXY]ÌKKÚ[XYÙ\ËÛX\Ù\\ÚYÝËÉËJNÂ[Ý[ÛÜX]PÛÛÜYXÛÛÛÛÜÝ[ÊHÂ]\]XÛÛÂ[]Ý[OHÚYÈZYÚÈÜ\\Y]\Î
-L	H
-L	H
-L	HÂXÚÙÜÝ[	ØÛÛÜNÈ[ÙÜNÝ]JM
-YYÊNÂÜ\ÛÛYÚ]NÈÞ\ÚYÝÎ
-ØJÊNÂ]Ý[OHÚYLÈZYÚLÈÜ\\Y]\Î
-L	NÂXÚÙÜÝ[Ú]NÈÜÚ][ÛXÛÛ]NÈÜ
-\ÈY
-\ÂÙ]Ù]Û\ÜÓ[YN	ÉËXÛÛÚ^NÌKXÛÛ[ÚÜÌLKÜ\[ÚÜÌLKJNÂBÊ
-ØÚÜÈHX\ÈÛÛ[[[TÈÝ[È[\ØX\ÈS[\XÝ[ÛË
-HX\\È\Ü^K[ÛH8 %ÈYÙÚ[ËÛÛZ[ËÛXÚÚ[ËÜ[Ü[Ë
-Â[Ý[ÛØÚÓX\
 
-HÂÛÛÝX\H\ÙSX\
+// Fix default marker icon issue with bundlers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
 
-NÂ\ÙQYXÝ
+function createColoredIcon(color: string) {
+  return L.divIcon({
+    html: `<div style="
+      width: 24px; height: 24px; border-radius: 50% 50% 50% 0;
+      background: ${color}; transform: rotate(-45deg);
+      border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    "><div style="
+      width: 10px; height: 10px; border-radius: 50%;
+      background: white; position: absolute; top: 5px; left: 5px;
+    "></div></div>`,
+    className: '',
+    iconSize: [24, 24],
+    iconAnchor: [12, 24],
+    popupAnchor: [0, -24],
+  });
+}
 
+/**
+ * Locks the map to continental US bounds and disables ALL interactions.
+ * The map is display-only â no dragging, zooming, clicking, or pin dropping.
+ */
+function LockMap() {
+  const map = useMap();
+  useEffect(() => {
+    // Fit to continental US
+    map.fitBounds(CONUS_BOUNDS, { padding: [10, 10] });
+    map.setMaxBounds(L.latLngBounds(CONUS_BOUNDS).pad(0.1));
+    map.setMinZoom(map.getZoom());
+    map.setMaxZoom(map.getZoom());
 
-HOÂËÈ]ÈÛÛ[[[TÂX\]Ý[ÊÓÓT×ÐÕSËÈY[ÎÌLLHJNÂX\Ù]X^Ý[Ê]ÐÝ[ÊÓÓT×ÐÕSÊKY
-JJNÂX\Ù]Z[ÛÛJX\Ù]ÛÛJ
-JNÂX\Ù]X^ÛÛJX\Ù]ÛÛJ
-JNÂËÈ\ØXH]\H[\XÝ[Û[\X\YÙÚ[Ë\ØXJ
-NÂX\ÝXÚÛÛK\ØXJ
-NÂX\ÝXPÛXÚÖÛÛK\ØXJ
-NÂX\ØÜÛÚY[ÛÛK\ØXJ
-NÂX\ÞÛÛK\ØXJ
-NÂX\Ù^XØ\\ØXJ
-NÂY
+    // Disable every interaction handler
+    map.dragging.disable();
+    map.touchZoom.disable();
+    map.doubleClickZoom.disable();
+    map.scrollWheelZoom.disable();
+    map.boxZoom.disable();
+    map.keyboard.disable();
+    if ((map as any).tap) (map as any).tap.disable();
 
-X\\È[JK\
-H
-X\\È[JK\\ØXJ
-NÂËÈK[ØÚÈÛ\Ú^HÛÈ]Ý^\È]YÛÛÝ[T\Ú^HH
+    // Re-lock on resize so it stays fitted
+    const handleResize = () => {
+      map.invalidateSize();
+      map.fitBounds(CONUS_BOUNDS, { padding: [10, 10] });
+      map.setMinZoom(map.getZoom());
+      map.setMaxZoom(map.getZoom());
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [map]);
+  return null;
+}
 
-HOÂX\[[Y]TÚ^J
-NÂX\]Ý[ÊÓÓT×ÐÕSËÈY[ÎÌLLHJNÂX\Ù]Z[ÛÛJX\Ù]ÛÛJ
-JNÂX\Ù]X^ÛÛJX\Ù]ÛÛJ
-JNÂNÂÚ[ÝËY][\Ý[\	Ü\Ú^IË[T\Ú^JNÂ]\
+interface EventMapProps {
+  events: TradeEvent[];
+}
 
-HOÚ[ÝË[[ÝQ][\Ý[\	Ü\Ú^IË[T\Ú^JNÂKÛX\JNÂ]\[ÂB[\XÙH][X\ÜÈÂ][ÎYQ][×NÂB^Ü[Ý[Û][X\
-È][ÈN][X\ÜÊHÂ]\
-]Û\ÜÓ[YOHÝ[Y^Ý\ÝËZY[Ü\Ü\^[ËLÚYÝË\ÛHÝ[O^ÞÈZYÚ	Í
-L	È_OX\ÛÛZ[\Ù[\^ÖÌÎKËNNMÎMW_BÛÛO^ÍBÝ[O^ÞÈZYÚ	ÌL	IËÚY	ÌL	IÈ_BØÜÛÚY[ÛÛO^Ù[Ù_BYÙÚ[Ï^Ù[Ù_BÝXPÛXÚÖÛÛO^Ù[Ù_BÝXÚÛÛO^Ù[Ù_BÛÛPÛÛÛ^Ù[Ù_B]X][ÛÛÛÛ^ÝY_B[S^Y\]X][ÛIÉÛÜNÈHYHÎËÝÝÝËÜ[ÝY]X\ÜËØÛÜ\YÚÜ[ÝY]X\ØOÂ\HÎËÞÜßK[KÜ[ÝY]X\ÜËÞÞKÞÞKÞÞ_KÈÏØÚÓX\ÏÙ][ËX\
+export function EventMap({ events }: EventMapProps) {
+  return (
+    <div className="rounded-xl overflow-hidden border border-zinc-200 shadow-sm" style={{ height: '450px' }}>
+      <MapContainer
+        center={[39.8283, -98.5795]}
+        zoom={4}
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={false}
+        dragging={false}
+        doubleClickZoom={false}
+        touchZoom={false}
+        zoomControl={false}
+        attributionControl={true}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-][
-HO
-X\Ù\Ù^O^Ù][YBÜÚ][Û^ÖÙ][]][×_BXÛÛ^ØÜX]PÛÛÜYXÛÛUSÕTWÐÓÓÔÖÙ][][\WJ_BÜ\X^ÚY^ÌO]Û\ÜÓ[YOH^\ÛHÛ\ÜÓ[YOHÛXÛ^^[ËNLXLHÙ][]_OÜÛ\ÜÓ[YOH^^[ËM^^ÈXLHÙ][ÜØ[^][ÛOÜÛ\ÜÓ[YOH^^[ËML^^ÈXLHÛ]È]J][]JKÓØØ[Q]TÝ[Ê	Ù[UTÉËÂ[Û	ÜÚÜ	Ë^N	Û[Y\XÉËYX\	Û[Y\XÉËJ_BÙ][[YHÈ0­È	Ù][[Y_X	ÉßBÜÛ\ÜÓ[YOH^^[ËML^^ÈÙ][\Õ\X[È	Õ\X[	È	Ù][Ú]_K	Ù][Ý]PÛÙ_XBÜÙ][ÛÝ\ÙU\	
-BY^Ù][ÛÝ\ÙU\B\Ù]HØ[È[HÛÜ[\ÜY\\Û\ÜÓ[YOH^X[X\M^^ÈÛ[YY][H]LH[[KXØÚÈÝ\[\[HY]ÈÛÝ\ÙH8¡¤ØO
-_BÙ]ÔÜ\ÓX\Ù\
-J_BÓX\ÛÛZ[\Ù]
-NÂB
+        <LockMap />
+
+        {events.map((event) => (
+          <Marker
+            key={event.id}
+            position={[event.lat, event.lng]}
+            icon={createColoredIcon(EVENT_TYPE_COLORS[event.eventType])}
+          >
+            <Popup maxWidth={280}>
+              <div className="text-sm">
+                <p className="font-bold text-zinc-900 mb-1">{event.title}</p>
+                <p className="text-zinc-600 text-xs mb-1">{event.organization}</p>
+                <p className="text-zinc-500 text-xs mb-1">
+                  {new Date(event.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                  {event.time ? ` Â· ${event.time}` : ''}
+                </p>
+                <p className="text-zinc-500 text-xs">
+                  {event.isVirtual ? 'Virtual' : `${event.city}, ${event.stateCode}`}
+                </p>
+                {event.sourceUrl && (
+                  <a
+                    href={event.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-amber-600 text-xs font-medium mt-1 inline-block hover:underline"
+                  >
+                    View source â
+                  </a>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
+  );
+}
