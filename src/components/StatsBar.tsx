@@ -19,7 +19,7 @@ export function StatsBar({ events, filteredCount }: StatsBarProps) {
         </div>
         <div>
           <p className="text-lg font-black text-zinc-900">{filteredCount}</p>
-          <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Events Shown</p>
+          <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Total Events</p>
         </div>
       </div>
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-3">
@@ -28,7 +28,7 @@ export function StatsBar({ events, filteredCount }: StatsBarProps) {
         </div>
         <div>
           <p className="text-lg font-black text-zinc-900">{totalEvents}</p>
-          <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Total Events</p>
+          <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Total Cities</p>
         </div>
       </div>
       <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-3">
