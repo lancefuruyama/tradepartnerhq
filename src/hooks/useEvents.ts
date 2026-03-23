@@ -48,14 +48,23 @@ function normalizeTitle(title: string): string {
 
 /** Remove duplicate events (same normalized title + city + date) */
 function deduplicateEvents(events: TradeEvent[]): TradeEvent[] {
-  const seen = new Map<string, TradeEvent>();
+  // Pass 1: exact dedup on normalized title + city + date
+  const seen1 = new Map<string, TradeEvent>();
   for (const event of events) {
     const key = `${normalizeTitle(event.title)}|${event.city.toLowerCase()}|${event.date}`;
-    if (!seen.has(key)) {
-      seen.set(key, event);
+    if (!seen1.has(key)) {
+      seen1.set(key, event);
     }
   }
-  return Array.from(seen.values());
+  // Pass 2: dedup on normalized title alone (catches same event in different cities)
+  const seen2 = new Map<string, TradeEvent>();
+  for (const event of seen1.values()) {
+    const titleKey = normalizeTitle(event.title);
+    if (!seen2.has(titleKey)) {
+      seen2.set(titleKey, event);
+    }
+  }
+  return Array.from(seen2.values());
 }
 
 export function useEvents() {
