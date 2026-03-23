@@ -39,7 +39,7 @@ function dbEventToTradeEvent(e: any): TradeEvent {
 function normalizeTitle(title: string): string {
   return title
     .toLowerCase()
-    .replace(/\s*[ââ\-]\s*.+$/, '')   // Strip suffixes after em-dash/en-dash/hyphen
+    .replace(/\s*[\u2014\u2013\-]\s*.+$/, '')   // Strip suffixes after em-dash/en-dash/hyphen
     .replace(/\b\d{4}\b/g, '')         // Strip year numbers
     .replace(/[^a-z\s]/g, '')          // Keep only letters and spaces
     .replace(/\s+/g, ' ')
