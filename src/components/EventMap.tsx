@@ -5,7 +5,7 @@ import type { TradeEvent } from '../types/event';
 import { EVENT_TYPE_COLORS } from '../types/event';
 
 // Continental US bounds â used to fit the map on load
-const CONUS_BOUNDS: L.LatLngBoundsExpression = [
+const CONUS_BOUNDS: [L.LatLngTuple, L.LatLngTuple] = [
   [24.396308, -125.0], // SW corner
   [49.384358, -66.93457], // NE cornerh
 ];
@@ -44,7 +44,7 @@ function LockMap() {
   useEffect(() => {
     // Fit to continental US
     map.fitBounds(CONUS_BOUNDS, { padding: [10, 10] });
-    map.setMaxBounds(L.latLngBounds(CONUS_BOUNDS).pad(0.1) as L.LatLngBoundsExpression);
+    map.setMaxBounds(L.latLngBounds(CONUS_BOUNDS).pad(0.1));
     map.setMinZoom(map.getZoom());
     map.setMaxZoom(map.getZoom());
 
