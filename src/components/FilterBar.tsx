@@ -27,7 +27,7 @@ export function FilterBar({ filters, onFilterChange, onClearFilters, events }: F
     const stateEvents = filters.stateCode
       ? events.filter((e) => e.stateCode === filters.stateCode)
       : events;
-    return [...new Set(stateEvents.map((e) => e.city))].sort();
+    return [...new Set(stateEvents.map((e) => e.city).filter(Boolean))].sort();
   }, [events, filters.stateCode]);
 
   const activeFilterCount =
