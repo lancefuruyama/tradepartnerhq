@@ -41,7 +41,7 @@ export default function HomePage() {
             </Link>
             <Link
               to="/awards"
-              className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3.5 px-8 rounded-lg transition-all text-center border border-zinc-600 hover:border-zinc-500 flex items-center justify-center gap-2"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-8 rounded-lg transition-all text-center shadow-lg shadow-emerald-600/25 hover:shadow-emerald-500/40 flex items-center justify-center gap-2"
             >
               View Contract Awards
               <ArrowRight className="w-4 h-4" />
