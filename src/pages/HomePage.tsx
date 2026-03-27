@@ -54,7 +54,7 @@ export default function HomePage() {
       <section className="border-y border-zinc-800 bg-zinc-900/50">
         <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-2xl md:text-3xl font-black text-amber-400">50+</p>
+            <p className="text-2xl md:text-3xl font-black text-amber-400">50</p>
             <p className="text-xs text-zinc-400 uppercase tracking-wider font-semibold mt-1">States Covered</p>
           </div>
           <div>
