@@ -73,14 +73,14 @@ export default function AwardsPage() {
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
         {loading && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-2 text-xs text-amber-400 animate-pulse">
-            Loading awards...
+            Loading contract awards...
           </div>
         )}
 
         {/* Filter + Count */}
         <div className="flex items-center gap-3 flex-wrap">
           <h3 className="text-sm font-bold text-zinc-300">
-            {filteredAwards.length} award{filteredAwards.length !== 1 ? 's' : ''} found
+            {filteredAwards.length} contract award{filteredAwards.length !== 1 ? 's' : ''} found
             {selectedState
               ? ` in ${US_STATES.find((s) => s.code === selectedState)?.name || selectedState}`
               : ''}
@@ -126,9 +126,9 @@ export default function AwardsPage() {
           ))}
           {filteredAwards.length === 0 && !loading && (
             <div className="text-center py-16">
-              <p className="text-zinc-400 text-lg font-semibold mb-2">No awards found</p>
+              <p className="text-zinc-400 text-lg font-semibold mb-2">No contract awards found</p>
               <p className="text-zinc-500 text-sm">
-                {selectedState ? 'Try selecting a different state.' : 'Check back soon for new awards.'}
+                {selectedState ? 'Try selecting a different state.' : 'Check back soon for new contract awards.'}
               </p>
             </div>
           )}

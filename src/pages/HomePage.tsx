@@ -37,7 +37,7 @@ export default function HomePage() {
               to="/awards"
               className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 px-8 rounded-lg transition-colors text-center border border-zinc-700"
             >
-              View Awards
+              View Contract Awards
             </Link>
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function HomePage() {
                 <Trophy className="w-6 h-6 text-zinc-900" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2 group-hover:text-amber-500 transition-colors">
-                Awarded Contracts
+                Contract Awards
               </h3>
               <p className="text-zinc-400 text-sm leading-relaxed">
                 Browse recently awarded construction projects across sectors. See who's winning work, project scope, and subcontractor opportunities.

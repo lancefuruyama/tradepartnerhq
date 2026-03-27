@@ -58,27 +58,28 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="bg-zinc-50 min-h-screen">
+    <div className="bg-zinc-900 min-h-screen">
+      {/* Map */}
+      <EventMap events={filteredEvents} />
+
+      {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div>
-          <h2 className="text-3xl font-black text-zinc-900">Outreach Events</h2>
-          <p className="text-zinc-500 text-sm mt-1">
+          <h2 className="text-3xl font-black text-white">Outreach Events</h2>
+          <p className="text-zinc-400 text-sm mt-1">
             Upcoming construction networking events, bid opportunities, and conferences
           </p>
         </div>
 
         {loading && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 text-xs text-amber-700 animate-pulse">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-2 text-xs text-amber-400 animate-pulse">
             Loading events...
           </div>
         )}
 
         {/* Stats */}
         <StatsBar events={events} filteredCount={filteredEvents.length} />
-
-        {/* Map */}
-        <EventMap events={filteredEvents} />
 
         {/* Filters */}
         <FilterBar
