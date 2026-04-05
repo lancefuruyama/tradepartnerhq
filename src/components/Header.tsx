@@ -10,9 +10,9 @@ export function Header() {
             <HardHat className="w-6 h-6 text-zinc-900" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-white tracking-tight leading-none">
+            <div className="text-xl font-black text-white tracking-tight leading-none">
               TRADE PARTNER <span className="text-amber-500">HQ</span>
-            </h1>
+            </div>
             <p className="text-[11px] text-zinc-400 tracking-widest uppercase">
               Free Business Intelligence for Specialty Contractors
             </p>
