@@ -35,7 +35,7 @@ export default function ToolPage() {
 
   if (!tool) {
     return (
-      <div className="min-h-screen bg-zinc-900 flex items-center justify-center p-4">
+      <div className="bg-zinc-900 flex items-center justify-center p-4 py-24">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white mb-2">Tool not found</h1>
           <p className="text-zinc-400">The tool you're looking for doesn't exist.</p>
@@ -248,7 +248,7 @@ export default function ToolPage() {
   const IconComponent = Icons[tool.iconName] || Icons.Zap;
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white py-12 px-4">
+    <div className="bg-zinc-900 text-white py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
