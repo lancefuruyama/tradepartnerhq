@@ -108,10 +108,10 @@ export default function ToolPage() {
             <div style="margin-bottom:8px;">
               <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
                 <span style="font-size:11px;color:#555;">${s.label}</span>
-                <span style="font-size:11px;color:#d97706;font-weight:700;">${s.value}%</span>
+                <span style="font-size:11px;color:#d97706;font-weight:700;">${Math.round(s.value)}%</span>
               </div>
               <div style="background:#eee;border-radius:4px;height:6px;overflow:hidden;">
-                <div style="background:#d97706;height:100%;width:${s.value}%;border-radius:4px;"></div>
+                <div style="background:#d97706;height:100%;width:${Math.min(Math.round(s.value), 100)}%;border-radius:4px;"></div>
               </div>
             </div>
           `
@@ -439,7 +439,7 @@ export default function ToolPage() {
                     <div key={idx}>
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-medium">{score.label}</span>
-                        <span className="text-sm text-amber-500 font-bold">{score.value}%</span>
+                        <span className="text-sm text-amber-500 font-bold">{Math.round(score.value)}%</span>
                       </div>
                       <div className="w-full bg-zinc-700 rounded-full h-2">
                         <div
