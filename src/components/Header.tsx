@@ -14,14 +14,24 @@ export function Header() {
               TRADE PARTNER <span className="text-amber-500">HQ</span>
             </h1>
             <p className="text-[11px] text-zinc-400 tracking-widest uppercase">
-              Where Trade Partners and General Contractors Connect!
+              Free Business Intelligence for Specialty Contractors
             </p>
           </div>
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-300">
-          <Link to="/events" className="hover:text-amber-500 transition-colors">Events</Link>
-          <Link to="/awards" className="hover:text-amber-500 transition-colors">Contract Awards</Link>
+          <Link to="/toolkit" className="hover:text-amber-500 transition-colors">Toolkit</Link>
+          <a
+            href=""
+            onClick={(e) => {
+              e.preventDefault();
+              // @ts-expect-error Calendly is loaded via external script
+              window.Calendly?.initPopupWidget({ url: 'https://calendly.com/lance-furuyama/tradepartnerhq' });
+            }}
+            className="bg-amber-500 hover:bg-amber-400 text-zinc-900 font-bold py-2 px-4 rounded-lg transition-all text-sm"
+          >
+            Free Consultation
+          </a>
         </nav>
       </div>
     </header>
