@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -13,6 +13,10 @@ const ROLES = [
 ];
 
 export default function ToolkitPage() {
+  useEffect(() => {
+    document.title = 'Free Toolkit | Trade Partner HQ';
+  }, []);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedRole = searchParams.get('profile') || '';
 

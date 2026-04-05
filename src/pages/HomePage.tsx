@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -81,6 +82,10 @@ const colorMap: Record<string, { bg: string; border: string; text: string; badge
 };
 
 export default function HomePage() {
+  useEffect(() => {
+    document.title = 'Trade Partner HQ — Free Business Intelligence for Specialty Contractors';
+  }, []);
+
   return (
     <div className="bg-zinc-950 min-h-screen">
 
@@ -438,10 +443,8 @@ export default function HomePage() {
             Book a free 30-minute Tailgate Talk. We'll walk through your results, identify the biggest opportunities, and help you put a plan in motion — no pitch, no pressure.
           </p>
           {/* Calendly link widget */}
-          <a
-            href=""
-            onClick={(e) => {
-              e.preventDefault();
+          <button
+            onClick={() => {
               // @ts-expect-error Calendly is loaded via external script
               window.Calendly?.initPopupWidget({ url: 'https://calendly.com/lance-furuyama/tradepartnerhq' });
             }}
@@ -449,7 +452,7 @@ export default function HomePage() {
           >
             Grab a Time — It's Free
             <ArrowRight className="w-5 h-5" />
-          </a>
+          </button>
         </div>
       </section>
     </div>

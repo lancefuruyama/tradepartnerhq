@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { FileText, AlertCircle, Info, Building2, Lightbulb } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { toolDefinitions } from '../data/toolDefinitions';
@@ -32,6 +32,14 @@ export default function ToolPage() {
   const [results, setResults] = useState<any>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState<string | null>(null);
+
+  // Set unique page title per tool
+  useEffect(() => {
+    if (tool) {
+      document.title = `${tool.name} | Trade Partner HQ`;
+    }
+    return () => { document.title = 'Trade Partner HQ — Free Business Intelligence for Specialty Contractors'; };
+  }, [tool]);
 
   if (!tool) {
     return (
@@ -297,10 +305,11 @@ export default function ToolPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* Company Name (always first) */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-zinc-200 mb-2">
+                <label htmlFor="companyName" className="block text-sm font-medium text-zinc-200 mb-2">
                   Company Name
                 </label>
                 <input
+                  id="companyName"
                   type="text"
                   value={formData.companyName || ''}
                   onChange={(e) => handleInputChange('companyName', e.target.value)}
@@ -312,7 +321,7 @@ export default function ToolPage() {
               {tool.inputs.map((input) => (
                 <div key={input.id}>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-sm font-medium text-zinc-200">
+                    <label htmlFor={`input-${input.id}`} className="block text-sm font-medium text-zinc-200">
                       {input.label}
                       {input.required && <span className="text-red-400 ml-0.5">*</span>}
                     </label>
@@ -320,10 +329,11 @@ export default function ToolPage() {
                       <div className="relative">
                         <button
                           type="button"
+                          aria-label={`More info about ${input.label}`}
                           onClick={() => setTooltipOpen(tooltipOpen === input.id ? null : input.id)}
                           onMouseEnter={() => setTooltipOpen(input.id)}
                           onMouseLeave={() => setTooltipOpen(null)}
-                          className="text-zinc-500 hover:text-amber-500 transition-colors"
+                          className="text-zinc-500 hover:text-amber-500 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center -m-2.5"
                         >
                           <Info className="w-4 h-4" />
                         </button>
@@ -341,6 +351,7 @@ export default function ToolPage() {
 
                   {input.type === 'select' ? (
                     <select
+                      id={`input-${input.id}`}
                       value={formData[input.id] || ''}
                       onChange={(e) => handleInputChange(input.id, e.target.value)}
                       className="w-full px-4 py-2 bg-zinc-700 border border-zinc-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none"
@@ -363,6 +374,7 @@ export default function ToolPage() {
                     <div className="flex items-center gap-2">
                       {input.prefix && <span className="text-zinc-400 text-sm font-medium">{input.prefix}</span>}
                       <input
+                        id={`input-${input.id}`}
                         type={input.type === 'number' ? 'number' : 'text'}
                         value={formData[input.id] || ''}
                         onChange={(e) => handleInputChange(input.id, e.target.value)}
