@@ -5,7 +5,7 @@ import HomePage from './pages/HomePage';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col">
+    <div className="min-h-screen bg-zinc-900 flex flex-col">
       <Header />
 
       <main className="flex-1">
