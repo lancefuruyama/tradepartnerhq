@@ -1,9 +1,9 @@
 import { useParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
-import { FileText, AlertCircle } from 'lucide-react';
+import { FileText, AlertCircle, Info, Building2, Lightbulb } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { toolDefinitions } from '../data/toolDefinitions';
-import * as calculations from '../data/calculations';
+import { calculateTool } from '../data/calculations';
 import { EmailGateModal } from '../components/EmailGateModal';
 import { useEmailGate } from '../hooks/useEmailGate';
 
@@ -31,6 +31,7 @@ export default function ToolPage() {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [results, setResults] = useState<any>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [tooltipOpen, setTooltipOpen] = useState<string | null>(null);
 
   if (!tool) {
     return (
@@ -58,67 +59,169 @@ export default function ToolPage() {
       return;
     }
 
-    const calculatorKey = `calculate${tool.name.replace(/\s+/g, '')}`;
-    const calculatorFunction = (calculations as any)[calculatorKey];
-
-    if (calculatorFunction) {
-      try {
-        const calculationResults = calculatorFunction(formData);
-        setResults(calculationResults);
-        setHasSubmitted(true);
-      } catch (error) {
-        console.error('Calculation error:', error);
-        alert('Error processing calculation. Please check your inputs.');
+    try {
+      const calculationResults = calculateTool(slug!, formData);
+      if ((calculationResults as any).error) {
+        alert('Error: ' + (calculationResults as any).error);
+        return;
       }
-    } else {
-      // Fallback results for demonstration
-      setResults({
-        primaryMetrics: [
-          { label: 'Primary Metric 1', value: '125,000', subtext: '$' },
-          { label: 'Primary Metric 2', value: '45%', subtext: '%' },
-          { label: 'Primary Metric 3', value: '3.2x', subtext: 'ratio' },
-          { label: 'Primary Metric 4', value: 'At Risk', subtext: 'status' },
-        ],
-        recommendations: [
-          'Establish a credit facility to manage cash flow gaps',
-          'Implement weekly cash reconciliation process',
-          'Review collection procedures for past-due accounts',
-        ],
-        scoreBreakdown: [
-          { label: 'Financial Health', value: 65 },
-          { label: 'Operational Efficiency', value: 72 },
-          { label: 'Risk Management', value: 58 },
-          { label: 'Growth Potential', value: 80 },
-        ],
-        riskLevel: 'High',
-        summary:
-          'Your organization shows strong growth potential but needs immediate attention to cash flow management.',
-      });
+      setResults(calculationResults);
       setHasSubmitted(true);
+    } catch (error) {
+      console.error('Calculation error:', error);
+      alert('Error processing calculation. Please check your inputs.');
     }
   };
 
-  // ─── Export functions ──────────────────────────────────────────
+  // ─── Professional PDF Export ──────────────────────────────────
   const exportAsPDF = () => {
-    if (typeof window !== 'undefined' && (window as any).html2pdf) {
-      const element = document.getElementById('results-section');
-      if (element) {
-        (window as any)
-          .html2pdf()
-          .set({ margin: 10, filename: `${tool.slug}.pdf` })
-          .from(element)
-          .save();
-      }
+    if (!results || !tool) return;
+
+    const companyName = formData.companyName || 'Your Company';
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Build detailed analysis sections HTML
+    let detailedSectionsHTML = '';
+    if (results.detailedAnalysis?.sections) {
+      detailedSectionsHTML = results.detailedAnalysis.sections
+        .map(
+          (section: any) => `
+        <div style="margin-bottom:18px;">
+          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px;">${section.title}</h3>
+          ${section.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:2px 0 2px 12px;border-left:2px solid #f5f5f5;">* ${item}</div>`).join('')}
+        </div>
+      `
+        )
+        .join('');
+    }
+
+    // Build score breakdown HTML
+    let scoreBreakdownHTML = '';
+    if (results.scoreBreakdown?.length > 0) {
+      scoreBreakdownHTML = `
+        <div style="margin-bottom:18px;">
+          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 10px 0;text-transform:uppercase;">SCORE BREAKDOWN</h3>
+          ${results.scoreBreakdown
+            .map(
+              (s: any) => `
+            <div style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:11px;color:#555;">${s.label}</span>
+                <span style="font-size:11px;color:#d97706;font-weight:700;">${s.value}%</span>
+              </div>
+              <div style="background:#eee;border-radius:4px;height:6px;overflow:hidden;">
+                <div style="background:#d97706;height:100%;width:${s.value}%;border-radius:4px;"></div>
+              </div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+
+    // Build recommendations HTML
+    let recsHTML = '';
+    if (results.recommendations?.length > 0) {
+      recsHTML = `
+        <div style="margin-bottom:18px;">
+          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;">RECOMMENDATIONS</h3>
+          ${results.recommendations.map((rec: string, idx: number) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:4px 0 4px 12px;"><strong style="color:#d97706;">${idx + 1}.</strong> ${rec}</div>`).join('')}
+        </div>
+      `;
+    }
+
+    const pdfHTML = `
+      <div id="pdf-export" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a1a1a;max-width:800px;margin:0 auto;padding:0;">
+        <!-- Header -->
+        <div style="background:#1a1a1a;padding:28px 32px 20px;border-radius:0;">
+          <h1 style="color:#fff;font-size:26px;font-weight:700;margin:0 0 6px 0;">${tool.name}</h1>
+          <p style="color:#999;font-size:13px;margin:0;">${companyName} - Trade Partner HQ Analysis</p>
+        </div>
+
+        <!-- Key Metrics -->
+        <div style="padding:24px 32px 16px;">
+          <h2 style="color:#d97706;font-size:15px;font-weight:700;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.5px;">KEY METRICS</h2>
+          ${results.primaryMetrics
+            ?.map(
+              (m: any) => `
+            <div style="background:#f8f8f8;border-left:3px solid #d97706;padding:12px 16px;margin-bottom:8px;">
+              <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${m.label}</div>
+              <div style="font-size:15px;font-weight:700;color:#1a1a1a;">${m.value}</div>
+              ${m.subtext ? `<div style="font-size:10px;color:#666;margin-top:2px;">${m.subtext}</div>` : ''}
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+
+        <!-- Detailed Analysis -->
+        <div style="padding:0 32px 16px;">
+          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
+            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">DETAILED ANALYSIS</h2>
+          </div>
+
+          ${detailedSectionsHTML}
+          ${scoreBreakdownHTML}
+          ${recsHTML}
+        </div>
+
+        <!-- Footer -->
+        <div style="padding:16px 32px;border-top:1px solid #eee;display:flex;justify-content:space-between;">
+          <span style="font-size:10px;color:#999;">TradePartnerHQ.com | ${dateStr}</span>
+          <span style="font-size:10px;color:#999;">calendly.com/lance-furuyama/tradepartnerhq</span>
+        </div>
+      </div>
+    `;
+
+    // Create a temporary container for html2pdf
+    const container = document.createElement('div');
+    container.innerHTML = pdfHTML;
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    document.body.appendChild(container);
+
+    const pdfElement = container.querySelector('#pdf-export');
+    if (pdfElement && (window as any).html2pdf) {
+      (window as any)
+        .html2pdf()
+        .set({
+          margin: [0, 0, 0, 0],
+          filename: `${tool.slug}-${companyName.toLowerCase().replace(/\s+/g, '-')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+        })
+        .from(pdfElement)
+        .save()
+        .then(() => {
+          document.body.removeChild(container);
+        });
     } else {
-      const content = `${tool.name}\n\nResults:\n${JSON.stringify(results, null, 2)}`;
+      document.body.removeChild(container);
+      // Fallback: plain text download
+      const content = `${tool.name}\n\n${JSON.stringify(results, null, 2)}`;
       downloadFile(content, `${tool.slug}.txt`, 'text/plain');
     }
   };
 
   const exportAsExcel = () => {
-    const headers = ['Metric', 'Value'];
-    const rows = (results.primaryMetrics || []).map((m: any) => [m.label, m.value]);
-    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    if (!results) return;
+    const headers = ['Metric', 'Value', 'Detail'];
+    const rows = (results.primaryMetrics || []).map((m: any) => [m.label, m.value, m.subtext || '']);
+    if (results.scoreBreakdown) {
+      rows.push(['', '', '']);
+      rows.push(['Score Category', 'Score', '']);
+      results.scoreBreakdown.forEach((s: any) => rows.push([s.label, `${s.value}%`, '']));
+    }
+    if (results.recommendations) {
+      rows.push(['', '', '']);
+      rows.push(['Recommendations', '', '']);
+      results.recommendations.forEach((r: string, i: number) => rows.push([`${i + 1}`, r, '']));
+    }
+    const csv = [headers, ...rows].map((row) => row.map((c: string) => `"${c}"`).join(',')).join('\n');
     downloadFile(csv, `${tool.slug}.csv`, 'text/csv');
   };
 
@@ -163,27 +266,93 @@ export default function ToolPage() {
           <p className="text-lg text-zinc-300">{tool.description}</p>
         </div>
 
+        {/* What Does This Tool Do? */}
+        <div className="bg-zinc-800 rounded-lg p-6 mb-6 border border-zinc-700">
+          <div className="flex items-start gap-3">
+            <Lightbulb className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <h2 className="text-lg font-bold text-amber-500 mb-2">What does this tool do?</h2>
+              <p className="text-zinc-300 leading-relaxed">{tool.whatItDoes}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Case Study */}
+        <div className="bg-zinc-800/50 rounded-lg p-6 mb-8 border border-zinc-700/50">
+          <div className="flex items-start gap-3">
+            <Building2 className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <h2 className="text-sm font-bold text-amber-500 uppercase mb-3">Case Study: {tool.caseStudy.company}</h2>
+              <p className="text-zinc-400 text-sm mb-2"><span className="text-zinc-300 font-semibold">The Challenge:</span> {tool.caseStudy.situation}</p>
+              <p className="text-zinc-400 text-sm"><span className="text-zinc-300 font-semibold">The Result:</span> {tool.caseStudy.result}</p>
+            </div>
+          </div>
+        </div>
+
         {/* Form Section */}
         {!hasSubmitted && (
           <form onSubmit={handleSubmit} className="bg-zinc-800 rounded-lg p-8 mb-8">
             <h2 className="text-2xl font-bold mb-6">Enter Your Information</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* Company Name (always first) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-zinc-200 mb-2">
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.companyName || ''}
+                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                  placeholder="Your Company Name"
+                  className="w-full px-4 py-2 bg-zinc-700 border border-zinc-600 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
               {tool.inputs.map((input) => (
                 <div key={input.id}>
-                  <label className="block text-sm font-medium text-zinc-200 mb-2">
-                    {input.label}
-                    {input.required && <span className="text-red-400">*</span>}
-                  </label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <label className="block text-sm font-medium text-zinc-200">
+                      {input.label}
+                      {input.required && <span className="text-red-400 ml-0.5">*</span>}
+                    </label>
+                    {input.tooltip && (
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setTooltipOpen(tooltipOpen === input.id ? null : input.id)}
+                          onMouseEnter={() => setTooltipOpen(input.id)}
+                          onMouseLeave={() => setTooltipOpen(null)}
+                          className="text-zinc-500 hover:text-amber-500 transition-colors"
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
+                        {tooltipOpen === input.id && (
+                          <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-zinc-900 border border-zinc-600 rounded-lg shadow-xl text-xs text-zinc-300 leading-relaxed">
+                            {input.tooltip}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
+                              <div className="w-2 h-2 bg-zinc-900 border-r border-b border-zinc-600 transform rotate-45" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {input.type === 'select' ? (
                     <select
                       value={formData[input.id] || ''}
                       onChange={(e) => handleInputChange(input.id, e.target.value)}
-                      className="w-full px-4 py-2 bg-zinc-700 border border-zinc-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="w-full px-4 py-2 bg-zinc-700 border border-zinc-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500 appearance-none"
                       required={input.required}
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 12px center',
+                        paddingRight: '36px',
+                      }}
                     >
-                      <option value="">{input.placeholder || 'Select...'}</option>
+                      <option value="">Select...</option>
                       {input.options?.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
@@ -192,7 +361,7 @@ export default function ToolPage() {
                     </select>
                   ) : (
                     <div className="flex items-center gap-2">
-                      {input.prefix && <span className="text-zinc-400">{input.prefix}</span>}
+                      {input.prefix && <span className="text-zinc-400 text-sm font-medium">{input.prefix}</span>}
                       <input
                         type={input.type === 'number' ? 'number' : 'text'}
                         value={formData[input.id] || ''}
@@ -204,7 +373,7 @@ export default function ToolPage() {
                         className="flex-1 px-4 py-2 bg-zinc-700 border border-zinc-600 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
                         required={input.required}
                       />
-                      {input.suffix && <span className="text-zinc-400">{input.suffix}</span>}
+                      {input.suffix && <span className="text-zinc-400 text-sm">{input.suffix}</span>}
                     </div>
                   )}
                 </div>
@@ -224,19 +393,21 @@ export default function ToolPage() {
         {hasSubmitted && results && (
           <div id="results-section" className="space-y-8">
             {/* Primary Metrics Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {results.primaryMetrics?.map((metric: any, idx: number) => (
-                <div key={idx} className="bg-zinc-800 rounded-lg p-4 text-center">
-                  <p className="text-xs text-zinc-400 mb-2 uppercase font-semibold">
-                    {metric.label}
-                  </p>
-                  <p className="text-3xl font-bold text-amber-500">{metric.value}</p>
-                  {metric.subtext && (
-                    <p className="text-xs text-zinc-500 mt-1">{metric.subtext}</p>
-                  )}
-                </div>
-              ))}
-            </div>
+            {results.primaryMetrics && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {results.primaryMetrics.map((metric: any, idx: number) => (
+                  <div key={idx} className="bg-zinc-800 rounded-lg p-4 text-center">
+                    <p className="text-xs text-zinc-400 mb-2 uppercase font-semibold">
+                      {metric.label}
+                    </p>
+                    <p className="text-2xl font-bold text-amber-500">{metric.value}</p>
+                    {metric.subtext && (
+                      <p className="text-xs text-zinc-500 mt-1">{metric.subtext}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Risk Level Alert */}
             {results.riskLevel && (
@@ -273,9 +444,30 @@ export default function ToolPage() {
                       <div className="w-full bg-zinc-700 rounded-full h-2">
                         <div
                           className="bg-amber-500 h-2 rounded-full"
-                          style={{ width: `${score.value}%` }}
+                          style={{ width: `${Math.min(score.value, 100)}%` }}
                         />
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Detailed Analysis Sections */}
+            {results.detailedAnalysis?.sections && results.detailedAnalysis.sections.length > 0 && (
+              <div className="bg-zinc-800 rounded-lg p-6">
+                <h3 className="text-xl font-bold mb-6">Detailed Analysis</h3>
+                <div className="space-y-5">
+                  {results.detailedAnalysis.sections.map((section: any, idx: number) => (
+                    <div key={idx}>
+                      <h4 className="text-sm font-bold text-amber-500 uppercase mb-2">{section.title}</h4>
+                      <ul className="space-y-1">
+                        {section.items.map((item: string, itemIdx: number) => (
+                          <li key={itemIdx} className="text-sm text-zinc-300 pl-3 border-l-2 border-zinc-700 py-0.5">
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   ))}
                 </div>

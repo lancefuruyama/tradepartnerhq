@@ -4,6 +4,7 @@ export interface ToolInput {
   type: 'number' | 'select' | 'text' | 'range';
   placeholder?: string;
   required: boolean;
+  tooltip?: string;
   options?: { value: string; label: string }[];
   min?: number;
   max?: number;
@@ -19,6 +20,12 @@ export interface ToolDefinition {
   category: string;
   iconName: string;
   roles: string[];
+  whatItDoes: string;
+  caseStudy: {
+    company: string;
+    situation: string;
+    result: string;
+  };
   inputs: ToolInput[];
   outputLabels: string[];
 }
@@ -28,6 +35,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'cash-flow-gap-analyzer',
     name: 'Cash Flow Gap Analyzer',
     description: 'Projects 90-day cash shortfalls and identifies periods of negative cash flow.',
+    whatItDoes: 'This tool models your cash position over the next 90 days by accounting for when you collect money from clients and when you need to pay for labor, equipment, and materials. It shows you exactly when cash shortfalls might occur so you can arrange financing before problems happen.',
+    caseStudy: {
+      company: 'Summit Mechanical (HVAC & Plumbing)',
+      situation: 'Summit had three large projects running with invoices totaling $400K, but clients were paying on Net-45 terms. Payroll was $180K monthly, and they needed $60K in equipment immediately. Management wasn\'t sure if they had enough cash to bridge the gap.',
+      result: 'The analyzer showed a $95K shortfall in week 8. Summit arranged a $100K line of credit before the crunch hit, avoided emergency borrowing costs, and maintained smooth operations. They made all payments on time and strengthened client relationships.',
+    },
     category: 'Financial',
     iconName: 'TrendingDown',
     roles: ['owner-ceo', 'finance-cfo'],
@@ -41,6 +54,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Your typical monthly revenue from all projects and services. Use a 12-month average if revenue varies seasonally.',
       },
       {
         id: 'avgCollectionDays',
@@ -52,6 +66,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 120,
         step: 1,
+        tooltip: 'How many days after invoicing until money hits your account. Net-30 terms = ~35 days; Net-45 = ~50 days. Check your actual payment history.',
       },
       {
         id: 'upcomingPayroll',
@@ -62,6 +77,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Total payroll costs (wages, taxes, benefits) due over the next 90 days. Include all crew, foremen, and office staff.',
       },
       {
         id: 'equipmentCosts',
@@ -72,6 +88,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Any planned equipment purchases, rentals, or lease payments over the next 90 days. Include trucks, tools, and machinery.',
       },
       {
         id: 'retainagePercent',
@@ -83,6 +100,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 100,
         step: 0.5,
+        tooltip: 'The percentage of payment clients hold back until project completion. Typical is 5-10%. This cash won\'t be available until project close.',
       },
       {
         id: 'openReceivables',
@@ -93,6 +111,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Invoices already sent but not yet paid. This money is coming in during your 90-day window based on your collection days.',
       },
     ],
     outputLabels: ['90-Day Projection', 'Critical Gap Period', 'Shortfall Amount', 'Recommended Action'],
@@ -101,6 +120,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'margin-erosion-monitor',
     name: 'Margin Erosion Monitor',
     description: 'Identifies line items and cost overruns eating into project margins.',
+    whatItDoes: 'This tool compares your actual costs to date against your contract price and estimated margin to flag which cost categories are running over budget. It reveals whether labor, materials, or subcontractors are the culprit so you can take corrective action before projects close at a loss.',
+    caseStudy: {
+      company: 'Cornerstone Concrete (Commercial Concrete)',
+      situation: 'Cornerstone bid a $1.2M parking garage project with a 12% target margin. At 60% completion, they had spent $520K in labor, $340K in materials, and $80K in equipment. Margin appeared healthy, but nobody had analyzed actual vs. budgeted costs by category.',
+      result: 'The monitor revealed labor was 18% over budget ($520K vs. $440K planned), while material costs were tracking correctly. The team adjusted crew scheduling and equipment usage, recovered $35K in the remaining work, and finished within 1% of target margin.',
+    },
     category: 'Financial',
     iconName: 'AlertTriangle',
     roles: ['owner-ceo', 'finance-cfo', 'operations-coo'],
@@ -114,6 +139,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'The full contract price the client agreed to pay. This is your revenue target for the project.',
       },
       {
         id: 'estimatedMarginPercent',
@@ -125,6 +151,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 100,
         step: 0.5,
+        tooltip: 'The profit percentage you planned for this project. Typical ranges: 10-15% for general contractors, 12-20% for specialty trades.',
       },
       {
         id: 'laborCost',
@@ -135,6 +162,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'All wages, payroll taxes, and benefits paid to crew working on this project so far. Use timesheets or accounting records.',
       },
       {
         id: 'materialCost',
@@ -145,6 +173,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Total cost of materials delivered and used on-site: lumber, steel, drywall, pipe, electrical components, etc.',
       },
       {
         id: 'equipmentCost',
@@ -155,6 +184,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Equipment purchases and rental costs for this project. Includes scissor lifts, concrete pumps, generators, compressors, etc.',
       },
       {
         id: 'subcontractorCost',
@@ -165,6 +195,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Invoices paid to subs for specialized work: electrical, HVAC, plumbing, framing, etc. Doesn\'t include your own labor.',
       },
       {
         id: 'changeOrderValue',
@@ -175,6 +206,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Extra revenue from approved scope additions. If blank, assumes no changes to contract value. Helps adjust your profit target.',
       },
     ],
     outputLabels: ['Current Margin %', 'At-Risk Items', 'Cost Overrun', 'Margin Recovery Actions'],
@@ -183,6 +215,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'overhead-benchmarker',
     name: 'Overhead Benchmarker',
     description: 'Compares overhead costs to industry standards and identifies optimization opportunities.',
+    whatItDoes: 'This tool calculates your overhead burden as a percentage of revenue and compares it to industry benchmarks for your size and trade. It shows you whether you\'re spending more on administration, rent, vehicles, and insurance than peer companies, helping you find cost reductions without cutting production.',
+    caseStudy: {
+      company: 'Horizon Electric (Commercial Electrical)',
+      situation: 'Horizon had $8M in annual revenue with $1.8M in overhead (22.5% of revenue). They assumed overhead was a fixed cost and had never benchmarked against peers. Leadership questioned whether they could reduce costs without layoffs.',
+      result: 'The tool revealed industry benchmark for their revenue tier was 16-18%. After detailed analysis, Horizon consolidated office locations (saved $80K rent), renegotiated insurance (saved $45K), and reduced administrative staff through better software (saved $60K). New overhead ratio: 18.5%. Freed up $185K for growth or profit.',
+    },
     category: 'Financial',
     iconName: 'BarChart3',
     roles: ['owner-ceo', 'finance-cfo'],
@@ -196,6 +234,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Your total annual revenue from all projects and services. Use last year\'s actual or this year\'s projection.',
       },
       {
         id: 'totalOverhead',
@@ -206,6 +245,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Sum of all non-project costs: office rent, utilities, insurance, admin salaries, vehicles, software, accounting, legal, etc. Everything not directly charged to a job.',
       },
       {
         id: 'officeRent',
@@ -216,6 +256,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Annual lease or rent for office, warehouse, and yard space. Include all locations.',
       },
       {
         id: 'insurance',
@@ -226,6 +267,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Total insurance premiums: general liability, workers\' comp, auto, property, umbrella/excess. Your biggest overhead item.',
       },
       {
         id: 'adminSalaries',
@@ -236,6 +278,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Salaries for office staff: estimators, project managers, HR, accounting, administrative assistants. Exclude field foremen.',
       },
       {
         id: 'vehicleCosts',
@@ -246,6 +289,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'All vehicle costs: fuel, maintenance, insurance, lease/loan payments for company trucks and cars. Exclude project-specific vehicle rentals.',
       },
       {
         id: 'softwareCosts',
@@ -256,6 +300,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Subscriptions and licenses for accounting software, project management, estimating tools, mobile apps, computers, servers, and IT support.',
       },
     ],
     outputLabels: ['Overhead Ratio', 'Industry Benchmark', 'Gap Analysis', 'Recommended Reductions'],
@@ -264,6 +309,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'win-rate-tracker',
     name: 'Win Rate Tracker',
     description: 'Analyzes bid conversion rates and identifies trends by trade and time period.',
+    whatItDoes: 'This tool calculates what percentage of bids you\'re winning and shows how your conversion rate compares to healthy benchmarks (25-35% typical). It helps you understand whether your estimating is competitive, your sales process is effective, or you need to focus bidding effort on higher-probability opportunities.',
+    caseStudy: {
+      company: 'Apex Carpentry & Framing (Residential & Light Commercial)',
+      situation: 'Apex had submitted 120 bids over a year and won only 18 (15% win rate). Sales leadership felt like they were chasing everything but closing nothing. They had no visibility into which trades or project types were most winnable.',
+      result: 'The tracker revealed electrical rough-in work (30% win rate) and framing (28%) were strong, but drywall finishing (8%) was a money loser. Apex refocused to pursue high-probability trades, increased bid quality for core services, and raised target win rate to 30%. Pipeline revenue doubled in the following year with fewer bids submitted.',
+    },
     category: 'Biz Dev',
     iconName: 'Target',
     roles: ['owner-ceo', 'operations-coo'],
@@ -276,6 +327,7 @@ export const toolDefinitions: ToolDefinition[] = [
         required: true,
         min: 1,
         step: 1,
+        tooltip: 'Total number of bids or proposals you\'ve submitted in the time period. Higher numbers give you more reliable trends.',
       },
       {
         id: 'bidsWon',
@@ -285,6 +337,7 @@ export const toolDefinitions: ToolDefinition[] = [
         required: true,
         min: 0,
         step: 1,
+        tooltip: 'Number of bids that resulted in signed contracts or awarded projects. Count only confirmed wins.',
       },
       {
         id: 'avgBidValue',
@@ -295,12 +348,14 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'The average dollar amount of each bid submitted. Helps estimate pipeline value and project size trends.',
       },
       {
         id: 'primaryTradeType',
         label: 'Primary Trade Type',
         type: 'select',
         required: true,
+        tooltip: 'Your main trade or service line. The analyzer will compare your win rate to trade-specific benchmarks.',
         options: [
           { value: 'electrical', label: 'Electrical' },
           { value: 'plumbing', label: 'Plumbing & HVAC' },
@@ -317,6 +372,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Time Period',
         type: 'select',
         required: true,
+        tooltip: 'The period over which you\'re measuring bids. Longer periods reduce seasonal noise; shorter periods show current trends.',
         options: [
           { value: '30days', label: 'Last 30 Days' },
           { value: '90days', label: 'Last 90 Days' },
@@ -332,6 +388,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'bid-no-bid-decision-tool',
     name: 'Bid/No-Bid Decision Tool',
     description: 'Scores opportunity viability and recommends bid/no-bid decisions based on strategic factors.',
+    whatItDoes: 'This tool evaluates a specific opportunity against your company\'s strengths, cash position, and risk tolerance. It scores payment terms, contractor reputation, crew availability, competition, and project fit to recommend whether you should bid or pass. Helps prevent costly mistakes like pursuing bad-pay GCs or projects outside your capability.',
+    caseStudy: {
+      company: 'Pacific Masonry (Specialty Trade)',
+      situation: 'Pacific received a large $800K commercial project from a GC they\'d never worked with. Project was 60 miles away, required heavy retainage (20%), and had 15+ bidders competing. Partners disagreed on whether to pursue it.',
+      result: 'The tool scored the opportunity 38/100 (high risk). Key factors: unknown GC reputation, long travel distance, poor payment terms, intense competition. Pacific passed. Weeks later, the GC filed bankruptcy post-project, and winning subs lost 30% of their money. Passing saved Pacific $240K in potential losses and protected cash flow.',
+    },
     category: 'Biz Dev',
     iconName: 'CheckCircle',
     roles: ['owner-ceo', 'operations-coo'],
@@ -345,12 +407,14 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'The total contract value if you win. Larger projects carry more financial risk and require more crew availability.',
       },
       {
         id: 'paymentTerms',
         label: 'Payment Terms',
         type: 'select',
         required: true,
+        tooltip: 'How quickly you\'ll be paid after invoicing. Net-90 and heavy retainage strain cash flow; progress billing is ideal.',
         options: [
           { value: 'net30', label: 'Net 30' },
           { value: 'net45', label: 'Net 45' },
@@ -365,6 +429,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'General Contractor Reputation',
         type: 'select',
         required: true,
+        tooltip: 'The GC\'s track record for paying subs on time. "Poor" or "Unknown" adds significant credit risk to the deal.',
         options: [
           { value: 'excellent', label: 'Excellent - Known for prompt pay' },
           { value: 'good', label: 'Good - Reliable history' },
@@ -378,6 +443,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Bonding Required',
         type: 'select',
         required: true,
+        tooltip: 'If bonding is required, check your bonding capacity. Bonding cost eats into margin.',
         options: [
           { value: 'no', label: 'No' },
           { value: 'yes', label: 'Yes' },
@@ -393,6 +459,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 500,
         step: 1,
+        tooltip: 'Distance from your main office/yard to the job site. Longer distances increase crew travel time and equipment costs.',
       },
       {
         id: 'crewAvailability',
@@ -404,12 +471,14 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 100,
         step: 5,
+        tooltip: 'Percentage of the crew you\'ll need that\'s available when the project starts. 100% = fully staffed; 50% = scrambling to hire.',
       },
       {
         id: 'projectType',
         label: 'Project Type',
         type: 'select',
         required: true,
+        tooltip: 'The nature of the project. Matches against your core competencies and experience.',
         options: [
           { value: 'commercial', label: 'Commercial' },
           { value: 'residential', label: 'Residential' },
@@ -423,6 +492,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Competition Level',
         type: 'select',
         required: true,
+        tooltip: 'How many other bidders are pursuing this job. Higher competition = lower win probability and thinner margins.',
         options: [
           { value: 'low', label: 'Low (3-5 bidders)' },
           { value: 'moderate', label: 'Moderate (6-10 bidders)' },
@@ -436,6 +506,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'prequalification-scorecard',
     name: 'Prequalification Scorecard',
     description: 'Ranks project fit and safety alignment for quick go/no-go decisions.',
+    whatItDoes: 'This tool scores whether a project matches your company\'s capabilities, safety certifications, bonding, and strategic fit. It answers the "can we and should we execute this" question quickly, helping you avoid pursuing work you\'re not set up to handle or that doesn\'t align with your growth goals.',
+    caseStudy: {
+      company: 'Five-Star HVAC (Commercial HVAC & Plumbing)',
+      situation: 'Five-Star received a union Davis-Bacon prevailing wage project requiring federal prevailing wage compliance and weekly reporting. They\'d never done prevailing wage work and lacked the compliance infrastructure. Estimator wanted to bid anyway because project value was $600K.',
+      result: 'Prequalification scorecard flagged safety requirements mismatch and specialized certification gap. Tool recommended "no-bid." Five-Star passed and avoided $45K in compliance labor, audit costs, and penalty risk. Focused estimating effort on commercial projects they regularly win.',
+    },
     category: 'Biz Dev',
     iconName: 'ClipboardList',
     roles: ['owner-ceo', 'operations-coo', 'field-leadership'],
@@ -449,12 +525,14 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Contract value if awarded. Larger projects demand higher capability maturity.',
       },
       {
         id: 'clientType',
         label: 'Client Type',
         type: 'select',
         required: true,
+        tooltip: 'Who\'s paying the bill. Government projects demand compliance; homeowners demand service; developers demand schedule reliability.',
         options: [
           { value: 'government', label: 'Government/Public' },
           { value: 'developer', label: 'Developer/Builder' },
@@ -468,6 +546,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Bonding Required',
         type: 'select',
         required: true,
+        tooltip: 'Check if you have available bonding capacity. If you don\'t, you can\'t take the job.',
         options: [
           { value: 'no', label: 'No' },
           { value: 'yes', label: 'Yes' },
@@ -478,6 +557,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Safety Requirements',
         type: 'select',
         required: true,
+        tooltip: 'The safety and compliance bar. Union/Davis-Bacon projects are most demanding; standard OSHA is baseline.',
         options: [
           { value: 'standard', label: 'Standard OSHA' },
           { value: 'enhanced', label: 'Enhanced Requirements' },
@@ -495,6 +575,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 1,
         max: 156,
         step: 1,
+        tooltip: 'Expected project length. Short sprints test execution; long projects demand sustained crew stability.',
       },
       {
         id: 'locationDistance',
@@ -506,12 +587,14 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 500,
         step: 1,
+        tooltip: 'Distance from your home office. Remote projects strain logistics and supervision.',
       },
       {
         id: 'tradeAlignment',
         label: 'Trade Alignment',
         type: 'select',
         required: true,
+        tooltip: 'How well the project scope matches your core expertise and track record.',
         options: [
           { value: 'perfect', label: 'Perfect - Core specialty' },
           { value: 'good', label: 'Good - Related experience' },
@@ -526,6 +609,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'bonding-capacity-calculator',
     name: 'Bonding Capacity Calculator',
     description: 'Calculates bonding ceiling based on financial metrics and backlog.',
+    whatItDoes: 'This tool estimates how much bonding your surety company will provide based on your financial statements and project backlog. It shows your maximum single-project limit and aggregate bonding capacity, critical for targeting projects and planning growth without overextending.',
+    caseStudy: {
+      company: 'Sterling Sitework (Civil & Excavation)',
+      situation: 'Sterling had $6M in revenue and $1.2M in working capital. They wanted to bid on a $2M highway project but weren\'t sure if they had enough bonding capacity. Previous surety bond cost them $15K annually.',
+      result: 'The calculator showed Sterling\'s bonding capacity was approximately $4.8M aggregate with a $1.8M single-project limit. They didn\'t have enough for the $2M project. Instead of stretching dangerously, Sterling pursued three $600K projects over the next year, stayed within bonding limits, and grew revenue to $8.2M without straining credit.',
+    },
     category: 'Bonding & Insurance',
     iconName: 'Shield',
     roles: ['owner-ceo', 'finance-cfo'],
@@ -539,6 +628,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Current assets minus current liabilities. This is your liquidity cushion and the main factor sureties use to approve bonding.',
       },
       {
         id: 'netWorth',
@@ -549,6 +639,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Total assets minus total liabilities. Shows your company\'s long-term financial health and ability to absorb losses.',
       },
       {
         id: 'annualRevenue',
@@ -559,6 +650,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Last year\'s actual or this year\'s projected total revenue. Sureties use this as one scaling factor.',
       },
       {
         id: 'currentBacklog',
@@ -569,6 +661,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Total value of signed contracts and awarded projects not yet complete. High backlog shows strong demand and project execution track record.',
       },
       {
         id: 'lineOfCredit',
@@ -579,6 +672,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Unused credit from your bank or lender. Gives surety confidence you can bridge cash shortfalls.',
       },
       {
         id: 'largestProject',
@@ -589,6 +683,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Your largest active or upcoming project. Limits your single-project bonding exposure.',
       },
     ],
     outputLabels: ['Bonding Capacity', 'Max Single Project', 'Aggregate Limit', 'Utilization %'],
@@ -597,6 +692,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'insurance-gap-analyzer',
     name: 'Insurance Gap Analyzer',
     description: 'Identifies coverage gaps and underinsurance risks across all policy types.',
+    whatItDoes: 'This tool reviews your current insurance limits across general liability, workers\' comp, auto, and umbrella coverage, and compares them to industry-standard minimums for your revenue size and project types. It flags gaps where you\'re underinsured and could face catastrophic losses.',
+    caseStudy: {
+      company: 'Prestige Roofing (Commercial & Residential Roofing)',
+      situation: 'Prestige had $4.5M annual revenue with $2M GL limit, $1M workers\' comp limit, and no professional liability coverage. They worked exclusively on commercial projects in a high-cost market. Had never formally reviewed insurance adequacy.',
+      result: 'The gap analyzer flagged GL limit at 44% of industry minimum and professional liability completely absent. Industry benchmark: $5M GL, $1.5M workers\' comp, $1M professional liability. Prestige upgraded coverage (cost: +$18K annually). Year later, a $2.8M claim for defective installation would have bankrupted them under old limits. New coverage protected company and employees.',
+    },
     category: 'Bonding & Insurance',
     iconName: 'AlertCircle',
     roles: ['owner-ceo', 'finance-cfo'],
@@ -610,6 +711,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Total annual revenue. Used to calculate appropriate insurance multiples (coverage should be 1-3x revenue depending on risk).',
       },
       {
         id: 'employees',
@@ -620,6 +722,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 1,
         max: 1000,
         step: 1,
+        tooltip: 'Full-time and part-time staff. More employees = higher workers\' comp exposure.',
       },
       {
         id: 'glLimit',
@@ -630,6 +733,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 100000,
+        tooltip: 'Your current GL policy limit. Covers bodily injury and property damage claims from your work.',
       },
       {
         id: 'workerCompLimit',
@@ -640,6 +744,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 100000,
+        tooltip: 'Workers\' comp policy limit per claim. In most states, workers\' comp is state-mandated, but limits vary.',
       },
       {
         id: 'autoLimit',
@@ -650,6 +755,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 100000,
+        tooltip: 'Coverage for company vehicles and equipment trailers. Covers both liability and physical damage.',
       },
       {
         id: 'umbrellaLimit',
@@ -660,12 +766,14 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 100000,
+        tooltip: 'Excess liability coverage that sits above GL, auto, and other primary policies. Cheap insurance for catastrophic exposure.',
       },
       {
         id: 'professionalLiability',
         label: 'Professional Liability Coverage',
         type: 'select',
         required: true,
+        tooltip: 'Also called E&O (errors & omissions). Required if you provide design/consulting; highly recommended for all.',
         options: [
           { value: 'none', label: 'None' },
           { value: '250k', label: '$250,000' },
@@ -678,6 +786,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Primary Project Types',
         type: 'select',
         required: true,
+        tooltip: 'Type of work you do. High-risk work (steel erection, heavy equipment) demands higher coverage.',
         options: [
           { value: 'residential', label: 'Residential' },
           { value: 'commercial', label: 'Commercial' },
@@ -692,6 +801,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'emr-simulator',
     name: 'EMR Simulator',
     description: 'Models Experience Modification Rate changes based on loss history and safety performance.',
+    whatItDoes: 'This tool projects how your workers\' comp EMR (Experience Modification Rate) will change based on your injury history and safety performance. An EMR above 1.0 means you pay above-market rates; below 1.0 means you get a discount. It shows the financial impact of safety improvements.',
+    caseStudy: {
+      company: 'Reliable Carpentry (Residential Framing)',
+      situation: 'Reliable had 3 lost-time claims over 3 years and an EMR of 1.35, costing $95K extra annually in workers\' comp premiums compared to a clean record. Management didn\'t realize safety performance had such direct financial impact.',
+      result: 'The EMR simulator showed that going 2 years claim-free would drop their EMR to 1.15, saving $45K/year. Reliable invested $60K in fall protection training, equipment, and toolbox talks. Over 3 years with zero claims, EMR dropped to 0.95, saving $120K annually. Safety program ROI: 4x return within 3 years.',
+    },
     category: 'Safety',
     iconName: 'Zap',
     roles: ['owner-ceo', 'field-leadership'],
@@ -705,6 +820,7 @@ export const toolDefinitions: ToolDefinition[] = [
         suffix: 'hours',
         min: 0,
         step: 100,
+        tooltip: 'Total employee hours (crew + office). Higher exposure (more hours) increases probability of claims.',
       },
       {
         id: 'lostTimeCases',
@@ -715,6 +831,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 50,
         step: 1,
+        tooltip: 'Injuries that caused an employee to miss work. Most expensive claims; heavily weighted in EMR calculation.',
       },
       {
         id: 'restrictedDuty',
@@ -725,6 +842,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 50,
         step: 1,
+        tooltip: 'Injuries allowing employee to work modified duty (light duties) instead of full tasks.',
       },
       {
         id: 'medicalOnly',
@@ -735,6 +853,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 100,
         step: 1,
+        tooltip: 'Injuries requiring medical treatment but no time off. Minor claims with small cost impact.',
       },
       {
         id: 'fatalities',
@@ -745,6 +864,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 10,
         step: 1,
+        tooltip: 'Workplace deaths. Catastrophic impact on EMR and insurability. Practically prohibitive to growth.',
       },
       {
         id: 'dartCases',
@@ -755,6 +875,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 150,
         step: 1,
+        tooltip: 'Days Away, Restricted, or Transferred cases. OSHA metric: sum of lost-time, restricted duty, and transfers.',
       },
     ],
     outputLabels: ['Projected EMR', 'DART Rate', 'TIR (Total Incident Rate)', 'Premium Impact'],
@@ -763,6 +884,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'safety-maturity-assessor',
     name: 'Safety Maturity Assessor',
     description: 'Benchmarks safety program maturity against industry best practices.',
+    whatItDoes: 'This tool scores how mature your safety program is using factors like written safety plans, training hours, incident rates, near-miss reporting, and management involvement. It compares your company to industry peers and shows where you\'re strong and where you need improvement to reduce injuries and insurance costs.',
+    caseStudy: {
+      company: 'Builders United (General Contractor - Mixed Trades)',
+      situation: 'Builders United had basic OSHA compliance but no formal safety program. Management involvement was ad-hoc. They tracked incidents but had no near-miss system. Incident rate was 6.2 per 200k hours vs. industry benchmark of 4.0. Safety felt like paperwork, not culture.',
+      result: 'The maturity assessor scored them at Level 2 (basic). Over 18 months, they implemented a formal safety program: written plan, monthly toolbox talks by trade, digital near-miss system with incentives, and weekly management site audits. Incident rate dropped to 3.1. Maturity improved to Level 3 (structured). EMR dropped 0.20 points, saving $35K annually. Stronger safety culture reduced employee turnover 15%.',
+    },
     category: 'Safety',
     iconName: 'Heart',
     roles: ['owner-ceo', 'operations-coo', 'field-leadership'],
@@ -772,6 +899,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Has Written Safety Plan',
         type: 'select',
         required: true,
+        tooltip: 'A documented, site-specific safety plan required by OSHA and most bonding/insurance. Foundational element of any safety program.',
         options: [
           { value: 'no', label: 'No' },
           { value: 'yes', label: 'Yes' },
@@ -786,6 +914,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 50,
         step: 0.1,
+        tooltip: 'OSHA metric: (number of recordable injuries × 200,000) / total hours worked. Benchmark: 3-5 for construction.',
       },
       {
         id: 'trainingHours',
@@ -797,12 +926,14 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 100,
         step: 1,
+        tooltip: 'Average hours of safety training per employee per year. Industry best practice: 16-24 hours. Includes toolbox talks, formal courses, and certifications.',
       },
       {
         id: 'nearMissReporting',
         label: 'Near Miss Reporting System',
         type: 'select',
         required: true,
+        tooltip: 'Formal tracking of close calls. Prevents incidents before they cause injuries. Best practice: incentivized system.',
         options: [
           { value: 'none', label: 'None' },
           { value: 'informal', label: 'Informal' },
@@ -820,12 +951,14 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 10,
         step: 0.1,
+        tooltip: 'Percentage of annual revenue dedicated to safety: training, equipment, audits, certifications. Best practice: 2-4%.',
       },
       {
         id: 'mgmtInvolvement',
         label: 'Management Safety Involvement',
         type: 'select',
         required: true,
+        tooltip: 'How actively leadership participates in safety. Visible commitment drives culture. Best practice: executive attends monthly safety meetings and site audits.',
         options: [
           { value: 'minimal', label: 'Minimal' },
           { value: 'moderate', label: 'Moderate - Occasional involvement' },
@@ -840,6 +973,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'toolbox-talk-generator',
     name: 'Toolbox Talk Generator',
     description: 'Generates targeted safety talks customized by trade, hazard, season, and job site.',
+    whatItDoes: 'This tool creates custom 10-15 minute safety talks tailored to your crew\'s specific trade, the hazards they\'re facing that day, the season, and job site conditions. It provides discussion points and OSHA references so foremen can deliver consistent, relevant safety messages without reinventing the wheel each day.',
+    caseStudy: {
+      company: 'Northern Steel Erection (Structural Steel)',
+      situation: 'Northern had a 15-person steel crew. Foremen delivered ad-hoc toolbox talks with inconsistent quality. Some talks missed critical hazards. Winter season brought new risks (ice, hypothermia, slippery decking) but talks didn\'t address seasonal specifics. No OSHA alignment.',
+      result: 'The generator created custom talks for steel erection in winter, covering fall protection, cold weather hazards, housekeeping on icy surfaces, and equipment inspection in freezing conditions. Foremen used generated talks with confidence. Near-miss reports increased (people felt empowered to speak up), but actual incidents dropped 35%. Crew training consistency improved dramatically.',
+    },
     category: 'Safety',
     iconName: 'Users',
     roles: ['field-leadership', 'operations-coo'],
@@ -849,6 +988,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Trade Type',
         type: 'select',
         required: true,
+        tooltip: 'Your crew\'s primary trade. Determines hazard focus and technical content.',
         options: [
           { value: 'electrical', label: 'Electrical' },
           { value: 'plumbing', label: 'Plumbing & HVAC' },
@@ -865,6 +1005,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Primary Hazard',
         type: 'select',
         required: true,
+        tooltip: 'The hazard most relevant today. Focus the talk on what your crew is facing right now on-site.',
         options: [
           { value: 'fall', label: 'Fall Protection' },
           { value: 'electrical', label: 'Electrical Safety' },
@@ -881,6 +1022,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Season/Time of Year',
         type: 'select',
         required: true,
+        tooltip: 'Current season. Talk will include seasonal hazards: summer heat stress, winter slips/cold, spring mud, fall storms.',
         options: [
           { value: 'spring', label: 'Spring' },
           { value: 'summer', label: 'Summer' },
@@ -893,6 +1035,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Job Site Type',
         type: 'select',
         required: true,
+        tooltip: 'Type of project. Renovation sites have different hazards than new construction; commercial differs from residential.',
         options: [
           { value: 'commercial', label: 'Commercial Building' },
           { value: 'residential', label: 'Residential' },
@@ -910,6 +1053,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 1,
         max: 100,
         step: 1,
+        tooltip: 'Number of people in the toolbox talk. Smaller groups allow more discussion; large groups need more structured format.',
       },
     ],
     outputLabels: ['Talk Content', 'Discussion Points', 'OSHA References', 'Activity Suggestions'],
@@ -918,6 +1062,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'revenue-concentration-analyzer',
     name: 'Revenue Concentration Analyzer',
     description: 'Quantifies customer and geographic concentration risk to business stability.',
+    whatItDoes: 'This tool calculates how dependent your company is on a few clients or geographic regions. High concentration risk means losing one client could devastate cash flow and profitability. It shows you how exposed you are and what diversification looks like.',
+    caseStudy: {
+      company: 'Valley Plumbing (Plumbing & HVAC Services)',
+      situation: 'Valley had $3.2M annual revenue with 65% from a single developer (the "Big Box" residential builder). Second client was 20%. They were successful but vulnerable. If Big Box hit financial trouble or switched contractors, Valley would lose $2M overnight.',
+      result: 'The analyzer showed extreme concentration risk (Herfindahl Index: 0.45; healthy = <0.15). Management committed to diversification: hired a sales rep, targeted commercial property managers, and pursued municipal work. Over 2 years, top client dropped to 40% of revenue while total revenue grew to $4.8M. Risk dropped to moderate level. Business became sustainable even if one client lost contract.',
+    },
     category: 'Strategy',
     iconName: 'PieChart',
     roles: ['owner-ceo', 'operations-coo'],
@@ -931,6 +1081,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Total revenue across all clients and projects. Base metric for concentration analysis.',
       },
       {
         id: 'topClientRevenue',
@@ -941,6 +1092,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Revenue from your single largest client. If this represents >25% of total, you have concentration risk.',
       },
       {
         id: 'secondClientRevenue',
@@ -951,6 +1103,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Revenue from your second-largest client. Top 2 clients >50% = high concentration.',
       },
       {
         id: 'thirdClientRevenue',
@@ -961,6 +1114,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Revenue from your third-largest client. Top 3 >70% = very high concentration.',
       },
       {
         id: 'primaryMarketPercent',
@@ -972,12 +1126,14 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 100,
         step: 5,
+        tooltip: 'Percentage of total revenue from your primary geographic market (e.g., single city/county). >60% = geographic concentration risk.',
       },
       {
         id: 'geoConcentration',
         label: 'Geographic Concentration',
         type: 'select',
         required: true,
+        tooltip: 'Your geographic footprint. Single-city = high risk; multi-state = low risk.',
         options: [
           { value: 'single', label: 'Single City/County' },
           { value: 'region', label: 'Single Region/State' },
@@ -992,6 +1148,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'growth-readiness-assessor',
     name: 'Growth Readiness Assessor',
     description: 'Scores organizational readiness for growth and identifies capability gaps.',
+    whatItDoes: 'This tool assesses whether your company has the people, systems, capital, and backlog to scale successfully. It identifies which areas will bottleneck growth (e.g., "weak management", "manual processes") so you can fix them before expanding and hitting a wall.',
+    caseStudy: {
+      company: 'Midwest Concrete (Commercial & Industrial Concrete)',
+      situation: 'Midwest had $2.8M revenue growing 22% annually and strong backlog (5.2 months). Owner wanted to grow to $5M in 2 years. They had 3 key estimators/PMs but limited formal systems. Processes were manual (Excel, email, phone calls).',
+      result: 'Growth readiness score: 62/100 (moderate). Bottlenecks identified: (1) only 3 key people, (2) ad-hoc systems can\'t handle 80% volume increase. Owner hired 2 estimators, implemented project management software, formalized estimation templates, and cross-trained office staff. Systems strengthened from ad-hoc to structured. Midwest scaled to $4.8M in 2 years without burning out leadership. Readiness score improved to 78.',
+    },
     category: 'Strategy',
     iconName: 'Rocket',
     roles: ['owner-ceo', 'operations-coo'],
@@ -1005,6 +1167,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 10000,
+        tooltip: 'Last 12 months of actual revenue. Used as baseline for growth readiness.',
       },
       {
         id: 'revenueGrowthRate',
@@ -1016,6 +1179,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: -50,
         max: 200,
         step: 1,
+        tooltip: 'Year-over-year growth rate. 15-25% = healthy growth; >50% = risk of overextension.',
       },
       {
         id: 'backlogMonths',
@@ -1027,6 +1191,7 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 0,
         max: 24,
         step: 0.5,
+        tooltip: 'Months of work booked ahead. <2 months = demand risk; >6 months = execution risk if systems aren\'t scalable.',
       },
       {
         id: 'keyEmployees',
@@ -1037,12 +1202,14 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 1,
         max: 100,
         step: 1,
+        tooltip: 'Number of critical people (owner, estimators, PM, foremen) who carry institutional knowledge. Rule of thumb: need 1 per $500K revenue.',
       },
       {
         id: 'systemsMaturity',
         label: 'Systems & Process Maturity',
         type: 'select',
         required: true,
+        tooltip: 'How documented and standardized your processes are. Manual processes don\'t scale; systems must grow with revenue.',
         options: [
           { value: 'ad-hoc', label: 'Ad-hoc - Manual processes' },
           { value: 'basic', label: 'Basic - Some documentation' },
@@ -1055,6 +1222,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Access to Growth Capital',
         type: 'select',
         required: true,
+        tooltip: 'Your ability to finance growth. Equipment, working capital, and people all cost money. No capital = limited growth.',
         options: [
           { value: 'none', label: 'None' },
           { value: 'limited', label: 'Limited - Personal savings only' },
@@ -1069,6 +1237,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'tech-stack-grader',
     name: 'Tech Stack Grader',
     description: 'Evaluates technology adoption and integration maturity across operations.',
+    whatItDoes: 'This tool reviews your software and technology usage across project management, estimating, labor tracking, accounting, and field reporting. It scores how integrated your tools are and whether you\'re getting business intelligence from your data or just papering over manual processes.',
+    caseStudy: {
+      company: 'Benson Electric (Commercial & Industrial Electrical)',
+      situation: 'Benson used separate tools: QuickBooks for accounting, an old estimating spreadsheet, a separate time-tracking app, and paper punch cards on some jobs. Data wasn\'t integrated. Reports were manually compiled. No visibility into real-time job costs.',
+      result: 'Tech stack grade: C (below average). Maturity: 35/100. Tool integration: standalone. Benson implemented an integrated ERP (project management + accounting + labor). Connected field tablets to central database. Eliminated manual data entry. Real-time cost tracking became standard. Project visibility improved 90%. Admin staff reduced 25% through automation. Tech grade improved to B+ within 12 months.',
+    },
     category: 'Software',
     iconName: 'Cpu',
     roles: ['owner-ceo', 'operations-coo'],
@@ -1078,6 +1252,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Uses Project Management Software',
         type: 'select',
         required: true,
+        tooltip: 'Software to schedule tasks, assign work, track progress. Examples: Monday, Asana, Procore, Touchplan.',
         options: [
           { value: 'no', label: 'No' },
           { value: 'yes', label: 'Yes' },
@@ -1088,6 +1263,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Uses Estimating Software',
         type: 'select',
         required: true,
+        tooltip: 'Software for bid development: databases, unit costs, RSMeans integration, material takeoff. Examples: Touchplan, Bid4Build, Bridgit Bench.',
         options: [
           { value: 'no', label: 'No' },
           { value: 'yes', label: 'Yes' },
@@ -1098,6 +1274,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Uses Time Tracking/Labor Software',
         type: 'select',
         required: true,
+        tooltip: 'Digital labor tracking: crew app, mobile punch, job-costing. Examples: Bridgit Bench, Deputy, OnSite, paper timesheets.',
         options: [
           { value: 'no', label: 'No' },
           { value: 'yes', label: 'Yes' },
@@ -1108,6 +1285,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Uses Accounting/ERP Software',
         type: 'select',
         required: true,
+        tooltip: 'Financial system: accounting, payroll, AR/AP, GL. Examples: QuickBooks, Sage, 3-part ERP.',
         options: [
           { value: 'no', label: 'No' },
           { value: 'yes', label: 'Yes' },
@@ -1118,6 +1296,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Uses Field Reporting/Mobile Apps',
         type: 'select',
         required: true,
+        tooltip: 'Mobile tools for on-site data: photos, RFI logs, daily reports, material requests. Examples: Bridgit, Fieldwire, DroneDeploy.',
         options: [
           { value: 'no', label: 'No' },
           { value: 'yes', label: 'Yes' },
@@ -1128,6 +1307,7 @@ export const toolDefinitions: ToolDefinition[] = [
         label: 'Integration Level',
         type: 'select',
         required: true,
+        tooltip: 'How much your tools talk to each other. Standalone = copying data by hand; Automated = data flows end-to-end.',
         options: [
           { value: 'standalone', label: 'Standalone - No integration' },
           { value: 'manual', label: 'Manual - Data entry between tools' },
@@ -1142,6 +1322,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'change-order-trend-tracker',
     name: 'Change Order Trend Tracker',
     description: 'Tracks change order volume, approval rates, and identifies root causes of scope creep.',
+    whatItDoes: 'This tool analyzes your change order activity: what percentage of your contract value is being absorbed in changes, approval/denial rates, and root causes (scope creep, design issues, site conditions, owner requests). It shows whether scope creep is your biggest profit leak.',
+    caseStudy: {
+      company: 'Premier Builders (General Contracting & Renovation)',
+      situation: 'Premier noticed change orders on renovation projects were spiraling. One $400K kitchen/bathroom retrofit had $75K in COs (18.75% of contract). But management couldn\'t see the pattern across all jobs or what was driving the changes.',
+      result: 'Change order analyzer revealed average CO impact was 16% of contract value (industry benchmark: 5-8%). Primary driver: design ambiguity and unforeseen site conditions in existing structures. Premier implemented a pre-construction walkthrough checklist, upgraded architectural drawings, and documented existing conditions in photos. CO rate dropped to 7%. Profitability improved $120K on that year\'s portfolio.',
+    },
     category: 'Operations',
     iconName: 'TrendingUp',
     roles: ['owner-ceo', 'finance-cfo', 'operations-coo'],
@@ -1155,6 +1341,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Base contract value before any change orders. Used to calculate CO % of contract.',
       },
       {
         id: 'totalChangeOrders',
@@ -1165,6 +1352,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Total value of all COs issued (requested + approved + denied). Shows how much change activity occurred.',
       },
       {
         id: 'approvedCOs',
@@ -1175,6 +1363,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Value of COs approved and executed. This becomes additional contract revenue but may have margin implications.',
       },
       {
         id: 'deniedCOs',
@@ -1185,6 +1374,7 @@ export const toolDefinitions: ToolDefinition[] = [
         prefix: '$',
         min: 0,
         step: 1000,
+        tooltip: 'Value of CO requests rejected or withdrawn. Shows items contractor requested but client/GC said no to.',
       },
       {
         id: 'avgProcessingDays',
@@ -1196,12 +1386,14 @@ export const toolDefinitions: ToolDefinition[] = [
         min: 1,
         max: 60,
         step: 1,
+        tooltip: 'Average number of days from CO request to approval/denial. Slow processing = extended work, cash flow delays.',
       },
       {
         id: 'primaryCOReason',
         label: 'Primary CO Reason',
         type: 'select',
         required: true,
+        tooltip: 'The main driver of changes. Identifies where to focus prevention efforts.',
         options: [
           { value: 'scope', label: 'Scope Clarification' },
           { value: 'owner', label: 'Owner Requests' },
@@ -1218,6 +1410,12 @@ export const toolDefinitions: ToolDefinition[] = [
     slug: 'crew-utilization-optimizer',
     name: 'Crew Utilization Optimizer',
     description: 'Analyzes crew productivity and identifies idle time, travel, and rework opportunities.',
+    whatItDoes: 'This tool breaks down where your crew\'s time actually goes: billable work, travel, idle waiting, rework, and training. It shows the cost of inefficiencies (idle time and rework are expensive) so you can prioritize improvements that boost billable hours and project profitability.',
+    caseStudy: {
+      company: 'Quality HVAC (Commercial HVAC Service & Installation)',
+      situation: 'Quality had a 12-person crew working across 20+ customer sites weekly. Labor was their biggest cost, but management had no visibility into actual productivity. Crew felt busy, but profit margin on labor was only 18% despite healthy billing rates.',
+      result: 'Crew utilization analysis revealed: 65% billable, 12% travel, 11% idle/waiting, 8% rework, 4% training. Idle time (waiting for parts, customer delays) cost $28K annually. Rework cost $18K. Quality implemented: (1) parts staging before arrival, (2) same-day problem resolution training, (3) route optimization. Billable hours rose to 74%. Annual crew productivity improved $46K (labor profit margin grew to 28%). Same crew, better utilization = higher profit.',
+    },
     category: 'Operations',
     iconName: 'Users2',
     roles: ['operations-coo', 'field-leadership'],
@@ -1231,6 +1429,7 @@ export const toolDefinitions: ToolDefinition[] = [
         suffix: 'hours',
         min: 0,
         step: 100,
+        tooltip: 'Total hours paid (8 hours/day × 5 days/week × 50 weeks/year ≈ 2,000 hours/person). Multiply by crew size.',
       },
       {
         id: 'billableHours',
@@ -1241,6 +1440,7 @@ export const toolDefinitions: ToolDefinition[] = [
         suffix: 'hours',
         min: 0,
         step: 100,
+        tooltip: 'Hours spent on revenue-generating work (installed, repaired, built). Your money maker.',
       },
       {
         id: 'travelHours',
@@ -1251,6 +1451,7 @@ export const toolDefinitions: ToolDefinition[] = [
         suffix: 'hours',
         min: 0,
         step: 100,
+        tooltip: 'Time driving between job sites. Necessary but non-billable. If high, indicates geographic spread or route inefficiency.',
       },
       {
         id: 'idleHours',
@@ -1261,6 +1462,7 @@ export const toolDefinitions: ToolDefinition[] = [
         suffix: 'hours',
         min: 0,
         step: 100,
+        tooltip: 'Waiting for materials, customer access, subcontractors, or decisions. Paid but non-productive. Often preventable.',
       },
       {
         id: 'reworkHours',
@@ -1271,6 +1473,7 @@ export const toolDefinitions: ToolDefinition[] = [
         suffix: 'hours',
         min: 0,
         step: 100,
+        tooltip: 'Time spent fixing previous work. Indicates quality or training issues. Pure profit loss.',
       },
       {
         id: 'trainingHours',
@@ -1281,6 +1484,7 @@ export const toolDefinitions: ToolDefinition[] = [
         suffix: 'hours',
         min: 0,
         step: 100,
+        tooltip: 'Safety training, skills development, certifications. Investment in crew capability; sometimes necessary.',
       },
     ],
     outputLabels: ['Utilization Rate %', 'Cost of Idle Time', 'Rework Impact', 'Optimization Actions'],
