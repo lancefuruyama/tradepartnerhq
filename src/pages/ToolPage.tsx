@@ -126,7 +126,7 @@ export default function ToolPage() {
     let actionPlanHTML = '';
     if (results.actionPlan?.phases) {
       actionPlanHTML = `
-        <div style="page-break-before:always;page-break-inside:avoid;">
+        <div style="page-break-inside:avoid;">
           <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
             <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
               ${results.actionPlan.title || 'ACTION PLAN'}
@@ -197,46 +197,42 @@ export default function ToolPage() {
 
     const pdfHTML = `
       <div id="pdf-export" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a1a1a;width:100%;margin:0;padding:0;background:#fff;">
-        <!-- PAGE 1: HEADER + KEY METRICS + DETAILED ANALYSIS -->
-        <div style="page-break-inside:avoid;">
-          <!-- Header -->
-          <div style="background:#1a1a1a;padding:28px 32px 20px;page-break-inside:avoid;">
-            <h1 style="color:#fff;font-size:26px;font-weight:700;margin:0 0 6px 0;">${tool.name}</h1>
-            <p style="color:#999;font-size:13px;margin:0;">${companyName} - Trade Partner HQ Analysis</p>
-          </div>
+        <!-- Header -->
+        <div style="background:#1a1a1a;padding:28px 32px 20px;">
+          <h1 style="color:#fff;font-size:26px;font-weight:700;margin:0 0 6px 0;">${tool.name}</h1>
+          <p style="color:#999;font-size:13px;margin:0;">${companyName} - Trade Partner HQ Analysis</p>
+        </div>
+        <div style="background:#1a1a1a;height:2px;"></div>
 
-          <!-- Dark separator -->
-          <div style="background:#1a1a1a;height:2px;page-break-inside:avoid;"></div>
-
-          <!-- Key Metrics -->
-          <div style="padding:24px 32px;page-break-inside:avoid;">
-            <h2 style="color:#d97706;font-size:15px;font-weight:700;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.5px;">KEY METRICS</h2>
-            ${metricsHTML}
-          </div>
-
-          <!-- Detailed Analysis -->
-          <div style="padding:0 32px 20px;">
-            ${detailedAnalysisHTML}
-          </div>
-
-          ${pageFooter}
+        <!-- Key Metrics -->
+        <div style="padding:24px 32px 12px;">
+          <h2 style="color:#d97706;font-size:15px;font-weight:700;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.5px;">KEY METRICS</h2>
+          ${metricsHTML}
         </div>
 
-        <!-- PAGE 2: ACTION PLAN -->
-        ${actionPlanHTML}
-        ${actionPlanHTML ? pageFooter : ''}
+        <!-- Detailed Analysis -->
+        <div style="padding:0 32px 20px;">
+          ${detailedAnalysisHTML}
+        </div>
 
-        <!-- PAGE 3 (optional): MEASUREMENT + EXPECTED OUTCOMES + CTA -->
+        <!-- Action Plan (flows naturally, no forced page break) -->
+        <div style="padding:0 32px 20px;">
+          ${actionPlanHTML}
+        </div>
+
+        <!-- Measurement + Expected Outcomes -->
         ${measurementHTML || expectedOutcomesHTML ? `
-          <div style="page-break-before:always;page-break-inside:avoid;">
-            <div style="padding:24px 32px;">
-              ${measurementHTML}
-              ${expectedOutcomesHTML}
-              ${ctaHTML}
-            </div>
-            ${pageFooter}
+          <div style="padding:0 32px 20px;">
+            ${measurementHTML}
+            ${expectedOutcomesHTML}
           </div>
         ` : ''}
+
+        <!-- CTA + Footer -->
+        <div style="padding:0 32px 12px;">
+          ${ctaHTML}
+        </div>
+        ${pageFooter}
       </div>
     `;
 
@@ -268,45 +264,23 @@ export default function ToolPage() {
       document.body.removeChild(container);
       // Fallback: plain text download
       const content = `${tool.name}\n\n${JSON.stringify(results, null, 2)}`;
-      downloadFile(content, `${tool.slug}.txt`, 'text/plain');
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tool.slug}.txt`;
+      a.click();
+      window.URL.revokeObjectURL(url);
     }
-  };
-
-  const exportAsExcel = () => {
-    if (!results) return;
-    const headers = ['Metric', 'Value', 'Detail'];
-    const rows = (results.primaryMetrics || []).map((m: any) => [m.label, m.value, m.subtext || '']);
-    if (results.scoreBreakdown) {
-      rows.push(['', '', '']);
-      rows.push(['Score Category', 'Score', '']);
-      results.scoreBreakdown.forEach((s: any) => rows.push([s.label, `${s.value}%`, '']));
-    }
-    if (results.recommendations) {
-      rows.push(['', '', '']);
-      rows.push(['Recommendations', '', '']);
-      results.recommendations.forEach((r: string, i: number) => rows.push([`${i + 1}`, r, '']));
-    }
-    const csv = [headers, ...rows].map((row) => row.map((c: string) => `"${c}"`).join(',')).join('\n');
-    downloadFile(csv, `${tool.slug}.csv`, 'text/csv');
-  };
-
-  const downloadFile = (content: string, filename: string, mimeType: string) => {
-    const blob = new Blob([content], { type: mimeType });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    window.URL.revokeObjectURL(url);
   };
 
   // Email gate wraps export — returning users skip the modal entirely
-  const handleExport = (format: 'pdf' | 'excel') => {
+  const handleExport = () => {
     if (!results) {
       alert('Please run the calculation first');
       return;
     }
-    emailGate.requestExport(format, format === 'pdf' ? exportAsPDF : exportAsExcel);
+    emailGate.requestExport('pdf', exportAsPDF);
   };
 
   // @ts-ignore — dynamic icon lookup
@@ -561,33 +535,11 @@ export default function ToolPage() {
             {/* Action Buttons */}
             <div className="flex gap-4 pt-4">
               <button
-                onClick={() => handleExport('pdf')}
+                onClick={() => handleExport()}
                 className="flex-1 px-6 py-3 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors font-medium flex items-center justify-center gap-2"
               >
                 <FileText className="w-5 h-5" />
                 Export PDF
-              </button>
-              <button
-                onClick={() => handleExport('excel')}
-                className="flex-1 px-6 py-3 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors font-medium flex items-center justify-center gap-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-                  <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-                  <path d="m10 13.5-2 2.5 2 2.5" />
-                  <path d="m14 13.5 2 2.5-2 2.5" />
-                </svg>
-                Export Excel
               </button>
               <button
                 onClick={() => {
