@@ -87,99 +87,156 @@ export default function ToolPage() {
 
     const companyName = formData.companyName || 'Your Company';
     const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    void now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Page footer HTML (used on every page)
+    const pageFooter = `
+      <div style="display:flex;justify-content:space-between;padding:12px 32px;border-top:1px solid #ddd;font-size:10px;color:#999;page-break-inside:avoid;">
+        <span>TradePartnerHQ.com | Page <span class="page-number">1</span></span>
+        <span>calendly.com/lance-furuyama/tradepartnerhq</span>
+      </div>
+    `;
 
     // Build detailed analysis sections HTML
-    let detailedSectionsHTML = '';
+    let detailedAnalysisHTML = '';
     if (results.detailedAnalysis?.sections) {
-      detailedSectionsHTML = results.detailedAnalysis.sections
-        .map(
-          (section: any) => `
-        <div style="margin-bottom:18px;">
-          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px;">${section.title}</h3>
-          ${section.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:2px 0 2px 12px;border-left:2px solid #f5f5f5;">* ${item}</div>`).join('')}
+      detailedAnalysisHTML = `
+        <div style="page-break-inside:avoid;">
+          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
+            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
+              ${results.detailedAnalysis.title || 'DETAILED ANALYSIS'}
+            </h2>
+          </div>
+          ${results.detailedAnalysis.subtitle ? `<p style="color:#666;font-size:11px;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;">${results.detailedAnalysis.subtitle}</p>` : ''}
+          ${results.detailedAnalysis.sections
+            .map(
+              (section: any) => `
+            <div style="margin-bottom:16px;page-break-inside:avoid;">
+              <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px;">${section.title}</h3>
+              ${section.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;">* ${item}</div>`).join('')}
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+
+    // Build action plan HTML
+    let actionPlanHTML = '';
+    if (results.actionPlan?.phases) {
+      actionPlanHTML = `
+        <div style="page-break-before:always;page-break-inside:avoid;">
+          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
+            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
+              ${results.actionPlan.title || 'ACTION PLAN'}
+            </h2>
+          </div>
+          ${results.actionPlan.subtitle ? `<p style="color:#666;font-size:11px;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.5px;">${results.actionPlan.subtitle}</p>` : ''}
+          ${results.actionPlan.phases
+            .map(
+              (phase: any) => `
+            <div style="margin-bottom:16px;page-break-inside:avoid;">
+              <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:0.5px;">${phase.title}</h3>
+              ${phase.description ? `<p style="color:#666;font-size:11px;margin:0 0 8px 0;line-height:1.5;">${phase.description}</p>` : ''}
+              ${phase.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;">* ${item}</div>`).join('')}
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `;
+    }
+
+    // Build measurement section HTML
+    let measurementHTML = '';
+    if (results.measurement?.items) {
+      measurementHTML = `
+        <div style="page-break-inside:avoid;">
+          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;">
+            ${results.measurement.title || 'MEASUREMENT'}
+          </h3>
+          ${results.measurement.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:6px;">* ${item}</div>`).join('')}
+        </div>
+      `;
+    }
+
+    // Build expected outcomes section HTML
+    let expectedOutcomesHTML = '';
+    if (results.expectedOutcomes?.items) {
+      expectedOutcomesHTML = `
+        <div style="margin-top:16px;page-break-inside:avoid;">
+          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;">
+            ${results.expectedOutcomes.title || 'EXPECTED OUTCOMES'}
+          </h3>
+          ${results.expectedOutcomes.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:6px;">* ${item}</div>`).join('')}
+        </div>
+      `;
+    }
+
+    // Build CTA box HTML
+    const ctaHTML = `
+      <div style="page-break-inside:avoid;background:#333;padding:20px 24px;margin-top:24px;text-align:center;border-radius:4px;">
+        <p style="color:#d97706;font-size:16px;font-weight:700;margin:0 0 10px 0;">Ready to take action?</p>
+        <p style="color:#fff;font-size:12px;margin:0;">Book a free 30-min session:<br /><span style="color:#d97706;font-weight:700;">calendly.com/lance-furuyama/tradepartnerhq</span></p>
+      </div>
+    `;
+
+    // Build primary metrics HTML
+    const metricsHTML = (results.primaryMetrics || [])
+      .map(
+        (m: any) => `
+        <div style="background:#f8f8f8;border-left:3px solid #d97706;padding:12px 16px;margin-bottom:8px;page-break-inside:avoid;">
+          <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:700;">${m.label}</div>
+          <div style="font-size:15px;font-weight:700;color:#1a1a1a;">${m.value}</div>
+          ${m.subtext ? `<div style="font-size:10px;color:#666;margin-top:2px;">${m.subtext}</div>` : ''}
         </div>
       `
-        )
-        .join('');
-    }
-
-    // Build score breakdown HTML
-    let scoreBreakdownHTML = '';
-    if (results.scoreBreakdown?.length > 0) {
-      scoreBreakdownHTML = `
-        <div style="margin-bottom:18px;">
-          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 10px 0;text-transform:uppercase;">SCORE BREAKDOWN</h3>
-          ${results.scoreBreakdown
-            .map(
-              (s: any) => `
-            <div style="margin-bottom:8px;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-                <span style="font-size:11px;color:#555;">${s.label}</span>
-                <span style="font-size:11px;color:#d97706;font-weight:700;">${Math.round(s.value)}%</span>
-              </div>
-              <div style="background:#eee;border-radius:4px;height:6px;overflow:hidden;">
-                <div style="background:#d97706;height:100%;width:${Math.min(Math.round(s.value), 100)}%;border-radius:4px;"></div>
-              </div>
-            </div>
-          `
-            )
-            .join('')}
-        </div>
-      `;
-    }
-
-    // Build recommendations HTML
-    let recsHTML = '';
-    if (results.recommendations?.length > 0) {
-      recsHTML = `
-        <div style="margin-bottom:18px;">
-          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;">RECOMMENDATIONS</h3>
-          ${results.recommendations.map((rec: string, idx: number) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:4px 0 4px 12px;"><strong style="color:#d97706;">${idx + 1}.</strong> ${rec}</div>`).join('')}
-        </div>
-      `;
-    }
+      )
+      .join('');
 
     const pdfHTML = `
-      <div id="pdf-export" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a1a1a;max-width:800px;margin:0 auto;padding:0;">
-        <!-- Header -->
-        <div style="background:#1a1a1a;padding:28px 32px 20px;border-radius:0;">
-          <h1 style="color:#fff;font-size:26px;font-weight:700;margin:0 0 6px 0;">${tool.name}</h1>
-          <p style="color:#999;font-size:13px;margin:0;">${companyName} - Trade Partner HQ Analysis</p>
-        </div>
-
-        <!-- Key Metrics -->
-        <div style="padding:24px 32px 16px;">
-          <h2 style="color:#d97706;font-size:15px;font-weight:700;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.5px;">KEY METRICS</h2>
-          ${results.primaryMetrics
-            ?.map(
-              (m: any) => `
-            <div style="background:#f8f8f8;border-left:3px solid #d97706;padding:12px 16px;margin-bottom:8px;">
-              <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${m.label}</div>
-              <div style="font-size:15px;font-weight:700;color:#1a1a1a;">${m.value}</div>
-              ${m.subtext ? `<div style="font-size:10px;color:#666;margin-top:2px;">${m.subtext}</div>` : ''}
-            </div>
-          `
-            )
-            .join('')}
-        </div>
-
-        <!-- Detailed Analysis -->
-        <div style="padding:0 32px 16px;">
-          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
-            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">DETAILED ANALYSIS</h2>
+      <div id="pdf-export" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a1a1a;width:100%;margin:0;padding:0;background:#fff;">
+        <!-- PAGE 1: HEADER + KEY METRICS + DETAILED ANALYSIS -->
+        <div style="page-break-inside:avoid;">
+          <!-- Header -->
+          <div style="background:#1a1a1a;padding:28px 32px 20px;page-break-inside:avoid;">
+            <h1 style="color:#fff;font-size:26px;font-weight:700;margin:0 0 6px 0;">${tool.name}</h1>
+            <p style="color:#999;font-size:13px;margin:0;">${companyName} - Trade Partner HQ Analysis</p>
           </div>
 
-          ${detailedSectionsHTML}
-          ${scoreBreakdownHTML}
-          ${recsHTML}
+          <!-- Dark separator -->
+          <div style="background:#1a1a1a;height:2px;page-break-inside:avoid;"></div>
+
+          <!-- Key Metrics -->
+          <div style="padding:24px 32px;page-break-inside:avoid;">
+            <h2 style="color:#d97706;font-size:15px;font-weight:700;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.5px;">KEY METRICS</h2>
+            ${metricsHTML}
+          </div>
+
+          <!-- Detailed Analysis -->
+          <div style="padding:0 32px 20px;">
+            ${detailedAnalysisHTML}
+          </div>
+
+          ${pageFooter}
         </div>
 
-        <!-- Footer -->
-        <div style="padding:16px 32px;border-top:1px solid #eee;display:flex;justify-content:space-between;">
-          <span style="font-size:10px;color:#999;">TradePartnerHQ.com | ${dateStr}</span>
-          <span style="font-size:10px;color:#999;">calendly.com/lance-furuyama/tradepartnerhq</span>
-        </div>
+        <!-- PAGE 2: ACTION PLAN -->
+        ${actionPlanHTML}
+        ${actionPlanHTML ? pageFooter : ''}
+
+        <!-- PAGE 3 (optional): MEASUREMENT + EXPECTED OUTCOMES + CTA -->
+        ${measurementHTML || expectedOutcomesHTML ? `
+          <div style="page-break-before:always;page-break-inside:avoid;">
+            <div style="padding:24px 32px;">
+              ${measurementHTML}
+              ${expectedOutcomesHTML}
+              ${ctaHTML}
+            </div>
+            ${pageFooter}
+          </div>
+        ` : ''}
       </div>
     `;
 
@@ -195,12 +252,12 @@ export default function ToolPage() {
       (window as any)
         .html2pdf()
         .set({
-          margin: [0, 0, 0, 0],
+          margin: [10, 0, 10, 0],
           filename: `${tool.slug}-${companyName.toLowerCase().replace(/\s+/g, '-')}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true, letterRendering: true },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+          pagebreak: { mode: ['css', 'legacy'] },
         })
         .from(pdfElement)
         .save()
