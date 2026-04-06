@@ -82,8 +82,22 @@ export default function ToolPage() {
   };
 
   // ─── Professional PDF Export ──────────────────────────────────
-  const exportAsPDF = () => {
+  const exportAsPDF = async () => {
     if (!results || !tool) return;
+
+    // Ensure html2pdf.js is loaded (dynamic fallback for slow mobile connections)
+    if (!(window as any).html2pdf) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load PDF library'));
+        document.head.appendChild(script);
+      }).catch(() => {
+        alert('Could not load PDF library. Please check your connection and try again.');
+        return;
+      });
+    }
 
     const companyName = formData.companyName || 'Your Company';
     const now = new Date();
@@ -330,22 +344,69 @@ export default function ToolPage() {
     document.body.appendChild(container);
 
     const pdfElement = container.querySelector('#pdf-export');
+    const pdfFilename = `${tool.slug}-${companyName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+
+    // Detect mobile/tablet (iOS Safari, Android Chrome, etc.)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+      (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+
     if (pdfElement && (window as any).html2pdf) {
-      (window as any)
+      const worker = (window as any)
         .html2pdf()
         .set({
           margin: [10, 0, 10, 0],
-          filename: `${tool.slug}-${companyName.toLowerCase().replace(/\s+/g, '-')}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+          filename: pdfFilename,
+          image: { type: 'jpeg', quality: isMobile ? 0.92 : 0.98 },
+          html2canvas: {
+            scale: isMobile ? 1.5 : 2,
+            useCORS: true,
+            letterRendering: true,
+            logging: false,
+          },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['css', 'legacy'] },
         })
-        .from(pdfElement)
-        .save()
-        .then(() => {
+        .from(pdfElement);
+
+      if (isMobile) {
+        // Mobile: generate blob and open in new tab (works on iOS Safari + Android Chrome)
+        worker.outputPdf('blob').then((blob: Blob) => {
           document.body.removeChild(container);
+          const blobUrl = URL.createObjectURL(blob);
+
+          // Try <a download> first (works on Android Chrome)
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = pdfFilename;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          // Fallback for iOS Safari: also open in new tab after short delay
+          // iOS Safari ignores <a download>, so opening the blob URL shows the PDF
+          // where the user can tap share → save/print
+          setTimeout(() => {
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                (navigator.userAgent.includes('Mac') && 'ontouchend' in document)) {
+              window.open(blobUrl, '_blank');
+            } else {
+              URL.revokeObjectURL(blobUrl);
+            }
+          }, 500);
+        }).catch(() => {
+          document.body.removeChild(container);
+          alert('PDF generation failed. Please try again.');
         });
+      } else {
+        // Desktop: standard save (creates <a download> internally)
+        worker.save().then(() => {
+          document.body.removeChild(container);
+        }).catch(() => {
+          document.body.removeChild(container);
+          alert('PDF generation failed. Please try again.');
+        });
+      }
     } else {
       document.body.removeChild(container);
       // Fallback: plain text download
