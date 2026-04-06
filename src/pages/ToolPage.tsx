@@ -82,145 +82,184 @@ export default function ToolPage() {
     }
   };
 
-  // ─── Copy to Clipboard ──────────────────────────────────────
+  // ─── Copy to Clipboard (Rich HTML + plain-text fallback) ────
   const copyToClipboard = async () => {
     if (!results || !tool) return;
 
-    const lines: string[] = [];
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const sectionHead = (title: string) =>
+      `<h2 style="margin:16px 0 8px;font-size:16px;color:#f59e0b;border-bottom:2px solid #f59e0b;padding-bottom:4px;">${esc(title)}</h2>`;
+    const bulletList = (items: string[]) =>
+      `<ul style="margin:4px 0 12px 20px;padding:0;">${items.map(i => `<li style="margin:2px 0;color:#333;">${esc(i)}</li>`).join('')}</ul>`;
+
+    const html: string[] = [];
+    const plain: string[] = [];
     const divider = '─'.repeat(50);
 
-    // Header
-    lines.push(tool.name.toUpperCase());
-    lines.push(`Company: ${formData.companyName || 'N/A'}`);
-    lines.push(divider);
+    // ── Header ──
+    html.push(`<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:700px;">`);
+    html.push(`<h1 style="margin:0 0 4px;font-size:20px;color:#18181b;">${esc(tool.name)}</h1>`);
+    html.push(`<p style="margin:0 0 12px;color:#71717a;font-size:14px;">Company: <strong>${esc(formData.companyName || 'N/A')}</strong></p>`);
+    plain.push(tool.name.toUpperCase(), `Company: ${formData.companyName || 'N/A'}`, divider);
 
-    // Summary / headline
+    // ── Summary ──
     if (results.summary) {
-      lines.push('');
-      lines.push('SUMMARY');
-      lines.push(results.summary);
+      html.push(sectionHead('Summary'));
+      html.push(`<p style="color:#333;">${esc(results.summary)}</p>`);
+      plain.push('', 'SUMMARY', results.summary);
     }
 
-    // Key Metrics
-    if (results.metrics && results.metrics.length > 0) {
-      lines.push('');
-      lines.push('KEY METRICS');
-      lines.push(divider);
+    // ── Key Metrics ──
+    if (results.metrics?.length) {
+      html.push(sectionHead('Key Metrics'));
+      html.push(`<table style="border-collapse:collapse;width:100%;margin-bottom:12px;">`);
       results.metrics.forEach((m: any) => {
-        lines.push(`  ${m.label}: ${m.value}`);
+        html.push(`<tr><td style="padding:4px 12px 4px 0;color:#71717a;font-size:14px;">${esc(m.label)}</td><td style="padding:4px 0;font-weight:bold;font-size:14px;color:#18181b;">${esc(m.value)}</td></tr>`);
       });
+      html.push('</table>');
+      plain.push('', 'KEY METRICS', divider);
+      results.metrics.forEach((m: any) => { plain.push(`  ${m.label}: ${m.value}`); });
     }
 
-    // Risk Alert
+    // ── Risk Alert ──
     if (results.riskLevel) {
-      lines.push('');
-      lines.push(`RISK LEVEL: ${results.riskLevel}`);
-      if (results.riskMessage) lines.push(`  ${results.riskMessage}`);
+      const riskColor: Record<string, string> = { Low: '#22c55e', Medium: '#eab308', High: '#f97316', Critical: '#ef4444' };
+      const color = riskColor[results.riskLevel] || '#71717a';
+      html.push(sectionHead('Risk Level'));
+      html.push(`<p style="font-weight:bold;color:${color};font-size:15px;">${esc(results.riskLevel)}</p>`);
+      if (results.riskMessage) html.push(`<p style="color:#333;font-size:14px;">${esc(results.riskMessage)}</p>`);
+      plain.push('', `RISK LEVEL: ${results.riskLevel}`);
+      if (results.riskMessage) plain.push(`  ${results.riskMessage}`);
     }
 
-    // Insight
+    // ── Insight ──
     if (results.insight) {
-      lines.push('');
-      lines.push('KEY INSIGHT');
-      lines.push(`  ${results.insight}`);
+      html.push(sectionHead('Key Insight'));
+      html.push(`<p style="color:#333;font-style:italic;">${esc(results.insight)}</p>`);
+      plain.push('', 'KEY INSIGHT', `  ${results.insight}`);
     }
 
-    // Detailed Analysis
+    // ── Detailed Analysis ──
     if (results.detailedAnalysis?.sections) {
-      lines.push('');
-      lines.push(results.detailedAnalysis.title?.toUpperCase() || 'DETAILED ANALYSIS');
-      lines.push(divider);
+      html.push(sectionHead(results.detailedAnalysis.title || 'Detailed Analysis'));
       results.detailedAnalysis.sections.forEach((section: any) => {
-        lines.push('');
-        lines.push(`  ${section.title}`);
-        section.items?.forEach((item: string) => {
-          lines.push(`    • ${item}`);
-        });
+        html.push(`<h3 style="margin:10px 0 4px;font-size:14px;color:#f59e0b;">${esc(section.title)}</h3>`);
+        if (section.items?.length) html.push(bulletList(section.items));
+      });
+      plain.push('', (results.detailedAnalysis.title || 'DETAILED ANALYSIS').toUpperCase(), divider);
+      results.detailedAnalysis.sections.forEach((section: any) => {
+        plain.push('', `  ${section.title}`);
+        section.items?.forEach((item: string) => { plain.push(`    • ${item}`); });
       });
     }
 
-    // Recommendations
-    if (results.recommendations && results.recommendations.length > 0) {
-      lines.push('');
-      lines.push('RECOMMENDATIONS');
-      lines.push(divider);
-      results.recommendations.forEach((rec: string, idx: number) => {
-        lines.push(`  ${idx + 1}. ${rec}`);
-      });
+    // ── Recommendations ──
+    if (results.recommendations?.length) {
+      html.push(sectionHead('Recommendations'));
+      html.push(`<ol style="margin:4px 0 12px 20px;padding:0;">${results.recommendations.map((r: string) => `<li style="margin:4px 0;color:#333;">${esc(r)}</li>`).join('')}</ol>`);
+      plain.push('', 'RECOMMENDATIONS', divider);
+      results.recommendations.forEach((rec: string, idx: number) => { plain.push(`  ${idx + 1}. ${rec}`); });
     }
 
-    // Scenario Analysis
+    // ── Scenario Analysis ──
     if (results.scenarioAnalysis) {
-      lines.push('');
-      lines.push(results.scenarioAnalysis.title?.toUpperCase() || 'SCENARIO ANALYSIS');
-      lines.push(divider);
+      html.push(sectionHead(results.scenarioAnalysis.title || 'Scenario Analysis'));
       if (results.scenarioAnalysis.ifActionTaken) {
-        lines.push(`  ${results.scenarioAnalysis.ifActionTaken.title}`);
-        results.scenarioAnalysis.ifActionTaken.items?.forEach((item: string) => {
-          lines.push(`    ✓ ${item}`);
-        });
+        html.push(`<h3 style="margin:8px 0 4px;font-size:14px;color:#22c55e;">✓ ${esc(results.scenarioAnalysis.ifActionTaken.title)}</h3>`);
+        if (results.scenarioAnalysis.ifActionTaken.items?.length) html.push(bulletList(results.scenarioAnalysis.ifActionTaken.items));
       }
       if (results.scenarioAnalysis.ifNoAction) {
-        lines.push(`  ${results.scenarioAnalysis.ifNoAction.title}`);
-        results.scenarioAnalysis.ifNoAction.items?.forEach((item: string) => {
-          lines.push(`    ✗ ${item}`);
-        });
+        html.push(`<h3 style="margin:8px 0 4px;font-size:14px;color:#ef4444;">✗ ${esc(results.scenarioAnalysis.ifNoAction.title)}</h3>`);
+        if (results.scenarioAnalysis.ifNoAction.items?.length) html.push(bulletList(results.scenarioAnalysis.ifNoAction.items));
+      }
+      plain.push('', (results.scenarioAnalysis.title || 'SCENARIO ANALYSIS').toUpperCase(), divider);
+      if (results.scenarioAnalysis.ifActionTaken) {
+        plain.push(`  ${results.scenarioAnalysis.ifActionTaken.title}`);
+        results.scenarioAnalysis.ifActionTaken.items?.forEach((i: string) => { plain.push(`    ✓ ${i}`); });
+      }
+      if (results.scenarioAnalysis.ifNoAction) {
+        plain.push(`  ${results.scenarioAnalysis.ifNoAction.title}`);
+        results.scenarioAnalysis.ifNoAction.items?.forEach((i: string) => { plain.push(`    ✗ ${i}`); });
       }
     }
 
-    // Industry Benchmarks
-    if (results.industryBenchmarks?.items && results.industryBenchmarks.items.length > 0) {
-      lines.push('');
-      lines.push(results.industryBenchmarks.title?.toUpperCase() || 'INDUSTRY BENCHMARKS');
-      lines.push(divider);
-      results.industryBenchmarks.items.forEach((item: string) => {
-        lines.push(`  • ${item}`);
-      });
+    // ── Industry Benchmarks ──
+    if (results.industryBenchmarks?.items?.length) {
+      html.push(sectionHead(results.industryBenchmarks.title || 'Industry Benchmarks'));
+      html.push(bulletList(results.industryBenchmarks.items));
+      plain.push('', (results.industryBenchmarks.title || 'INDUSTRY BENCHMARKS').toUpperCase(), divider);
+      results.industryBenchmarks.items.forEach((i: string) => { plain.push(`  • ${i}`); });
     }
 
-    // Projections
-    if (results.projections?.items && results.projections.items.length > 0) {
-      lines.push('');
-      lines.push(results.projections.title?.toUpperCase() || 'FINANCIAL PROJECTIONS');
-      lines.push(divider);
-      results.projections.items.forEach((item: string) => {
-        lines.push(`  • ${item}`);
-      });
+    // ── Projections ──
+    if (results.projections?.items?.length) {
+      html.push(sectionHead(results.projections.title || 'Financial Projections'));
+      html.push(bulletList(results.projections.items));
+      plain.push('', (results.projections.title || 'FINANCIAL PROJECTIONS').toUpperCase(), divider);
+      results.projections.items.forEach((i: string) => { plain.push(`  • ${i}`); });
     }
 
-    // Cascading Impact
-    if (results.cascadingImpact?.items && results.cascadingImpact.items.length > 0) {
-      lines.push('');
-      lines.push(results.cascadingImpact.title?.toUpperCase() || 'CASCADING BUSINESS IMPACT');
-      lines.push(divider);
-      results.cascadingImpact.items.forEach((item: string) => {
-        lines.push(`  • ${item}`);
-      });
+    // ── Cascading Impact ──
+    if (results.cascadingImpact?.items?.length) {
+      html.push(sectionHead(results.cascadingImpact.title || 'Cascading Business Impact'));
+      html.push(bulletList(results.cascadingImpact.items));
+      plain.push('', (results.cascadingImpact.title || 'CASCADING BUSINESS IMPACT').toUpperCase(), divider);
+      results.cascadingImpact.items.forEach((i: string) => { plain.push(`  • ${i}`); });
     }
 
-    // Footer
-    lines.push('');
-    lines.push(divider);
-    lines.push('Generated by Trade Partner HQ — tradepartnerhq.com');
+    // ── Footer ──
+    html.push(`<hr style="border:none;border-top:2px solid #e4e4e7;margin:16px 0 8px;"/>`);
+    html.push(`<p style="color:#a1a1aa;font-size:12px;">Generated by <a href="https://tradepartnerhq.com" style="color:#f59e0b;">Trade Partner HQ</a></p>`);
+    html.push('</div>');
+    plain.push('', divider, 'Generated by Trade Partner HQ — tradepartnerhq.com');
 
-    const text = lines.join('\n');
+    const htmlString = html.join('\n');
+    const plainString = plain.join('\n');
 
     try {
-      await navigator.clipboard.writeText(text);
+      // Modern Clipboard API — writes both HTML and plain text
+      const htmlBlob = new Blob([htmlString], { type: 'text/html' });
+      const textBlob = new Blob([plainString], { type: 'text/plain' });
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': htmlBlob,
+          'text/plain': textBlob,
+        }),
+      ]);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for older browsers / insecure contexts
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.left = '-9999px';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // Fallback: use execCommand with a contenteditable div for rich text
+      try {
+        const container = document.createElement('div');
+        container.innerHTML = htmlString;
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.setAttribute('contenteditable', 'true');
+        document.body.appendChild(container);
+        const range = document.createRange();
+        range.selectNodeContents(container);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+        document.execCommand('copy');
+        sel?.removeAllRanges();
+        document.body.removeChild(container);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // Last resort: plain text
+        const textarea = document.createElement('textarea');
+        textarea.value = plainString;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
     }
   };
 
@@ -903,7 +942,7 @@ export default function ToolPage() {
                 }`}
               >
                 {copied ? <Check className="w-5 h-5" /> : <ClipboardCopy className="w-5 h-5" />}
-                {copied ? 'Copied!' : 'Copy Results'}
+                {copied ? 'Copied!' : 'Copy to Clipboard'}
               </button>
               <button
                 onClick={() => {
