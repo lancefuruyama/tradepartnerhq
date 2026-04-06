@@ -61,6 +61,27 @@ export interface CalculationResult {
   };
   measurement?: { title: string; items: string[] };
   expectedOutcomes?: { title: string; items: string[] };
+  /** Scenario analysis: what happens if action is/isn't taken */
+  scenarioAnalysis?: {
+    title: string;
+    ifActionTaken: { title: string; items: string[] };
+    ifNoAction: { title: string; items: string[] };
+  };
+  /** Industry benchmarks with percentile ranking */
+  industryBenchmarks?: {
+    title: string;
+    items: string[];
+  };
+  /** 12/24/36 month financial projections */
+  projections?: {
+    title: string;
+    items: string[];
+  };
+  /** Cascading impact — how this metric affects downstream operations */
+  cascadingImpact?: {
+    title: string;
+    items: string[];
+  };
 }
 
 // ============================================================================
@@ -279,6 +300,66 @@ export function calculateCashFlowGapAnalyzer(inputs: Record<string, any>): Calcu
         `Build reserves for seasonal slowdowns and unexpected costs`,
       ],
     },
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN (90-Day Implementation)',
+        items: [
+          `Collection cycle improves from ${collDays} days to ${bestPracticeDays} days — ${fmt(cashFreed)} freed immediately`,
+          `Monthly financing costs reduced from ${fmt(monthlyInterest)} to ${fmt(monthlyInterest * 0.3)} (70% reduction)`,
+          `Annual interest savings: ${fmt(annualCarrying * 0.7)} returned to bottom line`,
+          `Material payables extended from Net ${matPayDays} to Net 45 = additional ${fmt(dailyRev * 15)} float`,
+          `Peak cash requirement drops from ${fmt(peakCashNeed)} to ${fmt(peakCashNeed * 0.4)} — eliminates LOC dependency`,
+          `Within 6 months: Build 45-day cash reserve (${fmt(rev * 1.5)}) — weather any downturn`,
+          `TOTAL 12-MONTH FINANCIAL IMPACT: +${fmt(savedAnnual + annualCarrying * 0.4)} to operating cash`,
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN (12-Month Trajectory)',
+        items: [
+          `Cash gap persists at ${fmt(gap)} and compounds with every revenue increase`,
+          `Annual financing costs: ${fmt(annualCarrying)} drained from profit indefinitely`,
+          `Every 5-day collection slip = ${fmt(dailyRev * 5)} additional working capital trapped`,
+          `Growth capped: each 10% revenue increase requires ${fmt(annualRev * 0.1 * (cashGapDays / 30))} more cash you don't have`,
+          `Seasonal 15% down-month creates ${fmt(rev * 0.15)} revenue gap while ${fmt(peakCashNeed)} still locked in cycle`,
+          `Supplier relationships erode — late payments trigger 2-3% material cost increases (${fmt(rev * 0.35 * 0.025)}/yr)`,
+          `TOTAL 12-MONTH COST OF INACTION: -${fmt(annualCarrying + annualRev * 0.1 * 0.025)} in lost profit + opportunity cost`,
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS (CFMA Annual Financial Survey)',
+      items: [
+        `Days Sales Outstanding: Your ${collDays} days vs. industry median 38 days — ${collDays <= 38 ? 'ABOVE AVERAGE' : 'BELOW AVERAGE'} (${collDays <= 30 ? '90th' : collDays <= 45 ? '70th' : collDays <= 60 ? '50th' : '20th'} percentile)`,
+        `Working Capital/Revenue: ${wcPctRev}% vs. benchmark 8-12% — ${parseFloat(wcPctRev) <= 12 ? 'Efficient' : 'Excess cash trapped in cycle'} (${parseFloat(wcPctRev) <= 12 ? '75th' : parseFloat(wcPctRev) <= 20 ? '50th' : '25th'} percentile)`,
+        `Cash Reserves: ${fmt(availCash)} on hand — ${availCash > payroll * 1.5 ? 'Adequate (80th percentile)' : availCash > payroll ? 'Thin cushion (60th percentile)' : 'CRITICAL — below 1 payroll cycle (40th percentile)'}`,
+        `Retainage Impact: ${retPct}% held (${fmt(retHeld)}) — industry typical 5-10% — ${retPct <= 8 ? 'within norms' : 'above average, negotiate release schedule'}`,
+        `Financing Cost Burden: ${fmt(annualCarrying)}/yr = ${((annualCarrying / (annualRev || 1)) * 100).toFixed(2)}% of revenue — top-quartile firms keep this below 0.5%`,
+        `Collection Efficiency: ${collDays <= 30 ? 'Top 10% nationally' : collDays <= 45 ? 'Average for specialty subs' : 'Bottom quartile — immediate attention needed'}`,
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        `MONTH 3: Collections reach 35 days → cash need drops to ${fmt(peakCashNeed * 0.65)}, interest savings begin at ${fmt(monthlyInterest * 0.35)}/mo`,
+        `MONTH 6: Collections reach ${bestPracticeDays} days → ${fmt(cashFreed)} freed, LOC usage drops 60%, begin building reserves`,
+        `MONTH 12: With 5% organic growth, improved cash efficiency supports ${fmt(annualRev * 1.05)} revenue without additional financing`,
+        `MONTH 24: Compounding benefit — cumulative savings of ${fmt(savedAnnual * 2 + annualCarrying * 0.7)}, reserves at ${fmt(rev * 2)} (2-month cushion)`,
+        `MONTH 36: Cash-positive operations fund equipment purchases, hire key staff, bid larger projects — revenue potential: ${fmt(annualRev * 1.3)}`,
+        `WITHOUT ACTION: Month 12 cash gap widens to ${fmt(peakCashNeed * 1.1)}, Month 24 financing costs compound to ${fmt(annualCarrying * 2.3)}`,
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        `Cash Flow → Payroll: Faster collections = consistent payroll = reduced turnover (saves ~${fmt(payroll * 0.15)}/yr in replacement costs)`,
+        `Cash Flow → Suppliers: On-time payment unlocks 2-3% volume discounts = ${fmt(rev * 0.35 * 0.025)}/yr material savings + priority fulfillment`,
+        `Cash Flow → Growth: ${fmt(cashFreed)} freed cash enables bidding on ${fmt(annualRev * 0.2)} in additional projects without new financing`,
+        `Cash Flow → Banking: Improved DSO from ${collDays} to ${bestPracticeDays} days strengthens LOC terms — rates drop 1-2 points (saves ${fmt(annualCarrying * 0.25)}/yr)`,
+        `Cash Flow → Bonding: Stronger balance sheet increases bonding capacity by 15-25% — opens larger project opportunities`,
+        `Cash Flow → Equipment: Freed cash funds fleet modernization — newer equipment reduces maintenance 30% and improves job efficiency`,
+      ],
+    },
   };
 }
 
@@ -416,6 +497,69 @@ export function calculateMarginErosionMonitor(inputs: Record<string, any>): Calc
         `Reduce labor variance from ${laborVar.toFixed(1)}% to <5%`,
         `Establish real-time cost visibility across all active projects`,
         `Prevent margin erosion on future projects through proactive monitoring`,
+      ],
+    },
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF RECOVERY ACTIONS IMPLEMENTED (60 Days)',
+        items: [
+          `Labor variance reduced from ${laborVar.toFixed(1)}% to 3% = savings of ${fmt(laborImpact * 0.7)}`,
+          `Material variance reduced from ${matVar.toFixed(1)}% to 2% = savings of ${fmt(matImpact * 0.6)}`,
+          `Change order capture improves: recover ${fmt(co > 0 ? co * 0.9 : dollarLoss * 0.3)} in CO revenue`,
+          `Schedule efficiency improves 5 days = overhead reduction ${fmt(5 * 333)}`,
+          `Recovered profit: ${fmt(dollarLoss > 0 ? dollarLoss * 0.6 : actualProfit * 0.15)}`,
+          `Margin recovers to ${(actualPct + marginGap * 0.6).toFixed(1)}% (within 1% of target)`,
+          `Daily cost tracking + labor productivity controls + material lockdowns enable predictive variance detection`,
+        ],
+      },
+      ifNoAction: {
+        title: 'IF CURRENT PRACTICES CONTINUE (12 Months)',
+        items: [
+          `Margin erosion compounds: projects 2-4 likely repeat ${marginGap.toFixed(1)}% gap = ${fmt(dollarLoss * 3)} cumulative loss`,
+          `Labor productivity issues undiagnosed: overhead continues to spiral 1.5-2% annually`,
+          `Material waste continues unchecked: cumulative waste over 12 months = ${fmt(matImpact * 12)}`,
+          `Schedule slippage becomes endemic: every project 5-10 days over = ${fmt(schedDays * 333 * 12)} annual overhead burden`,
+          `Competitive disadvantage grows: unable to bid at target margins vs. competitors with real-time controls`,
+          `Subcontractor relationships deteriorate: blame-shifting on cost overruns damages partnerships`,
+          `Equipment utilization declines: inefficient scheduling means higher equipment costs`,
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        `Project Margin Target: ${targetPct.toFixed(1)}% vs. 15-18% benchmark (${targetPct >= 18 ? '75th' : targetPct >= 15 ? '50th' : '25th'} percentile) — ${targetPct < 15 ? 'Below-market margins — risk/reward imbalance' : 'Market-aligned targets'}`,
+        `Labor Variance Control: ${laborVar.toFixed(1)}% vs. <5% benchmark (${laborVar <= 5 ? '85th' : laborVar <= 10 ? '60th' : '20th'} percentile) — ${laborVar > 10 ? 'Productivity tracking needed — above industry' : 'Good labor cost control'}`,
+        `Material Cost Control: ${matVar.toFixed(1)}% vs. <5% benchmark (${matVar <= 5 ? '80th' : matVar <= 10 ? '50th' : '15th'} percentile) — ${matVar > 10 ? 'Supplier negotiations and waste reduction required' : 'Competitive material management'}`,
+        `Schedule Adherence: ${schedDays} days vs. On-time/±2% (${schedDays <= 0 ? '95th' : schedDays <= 3 ? '70th' : '35th'} percentile) — ${schedDays > 5 ? 'Chronic delays indicate planning/supervision gaps' : 'Schedule discipline in place'}`,
+        `Change Order Capture: ${co > 0 ? 'Captured' : 'Missed'} vs. 95%+ rate (${co > dollarLoss ? '90th' : co > 0 ? '60th' : '10th'} percentile) — ${co <= 0 ? 'Lost change order revenue — scope creep not documented' : 'Good CO discipline'}`,
+        `Cost Recovery Rate: ${((actualProfit / targetProfit) * 100).toFixed(1)}% vs. 95-100% (${(actualProfit / targetProfit) >= 0.95 ? '90th' : (actualProfit / targetProfit) >= 0.85 ? '60th' : '20th'} percentile) — ${(actualProfit / targetProfit) < 0.85 ? 'Significant margin leakage vs. peers' : 'Good cost recovery'}`,
+        `Your performance vs. top quartile peers shows ${laborVar + matVar > 15 ? 'material gaps' : 'competitive positioning'} across cost and schedule management`,
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        `30 DAYS - Current Trend Continues: Margin ${actualPct.toFixed(1)}%, Profit ${fmt(actualProfit)}, Cost Overrun ${fmt(Math.max(0, overrun))} — No improvement initiated, margin remains eroded`,
+        `60 DAYS - Recovery Actions Implemented: Margin ${(actualPct + marginGap * 0.5).toFixed(1)}%, Profit ${fmt(actualProfit + dollarLoss * 0.5)}, Cost Overrun ${fmt(Math.max(0, overrun * 0.5))} — Labor controls reduce variance; material lockdowns save ${fmt(matImpact * 0.5)}`,
+        `12 MONTHS - Sustained Improvements: Margin ${(targetPct - 0.5).toFixed(1)}%, Profit ${fmt(actualProfit + dollarLoss)}, Cost Overrun Minimal — Apply learnings to pipeline: 4 similar projects recover margin discipline, annual benefit ${fmt((dollarLoss) * 4)}`,
+        `24 MONTHS - Systems Embedded: Margin ${(targetPct + 0.5).toFixed(1)}%, Profit ${fmt(actualProfit + dollarLoss * 1.3)}, Annual Benefit ${fmt(dollarLoss * 1.3)} — Real-time dashboards + predictive cost modeling enable competitive pricing advantage`,
+        `Probability of achieving 60-day recovery target: 75% (based on typical implementation success rates for GC margin controls)`,
+        `Worst-case scenario (partial implementation): Margin improves to ${(actualPct + marginGap * 0.25).toFixed(1)}%, profit recovery ${fmt(dollarLoss * 0.25)}`,
+        `Best-case scenario (full + operational discipline): Margin reaches ${(targetPct + 0.5).toFixed(1)}% by month 18, sustainable above target thereafter`,
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING IMPACT & STRATEGIC BENEFITS',
+      items: [
+        `Bid Pricing Strategy → Competitive Edge: Accurate cost controls enable data-driven pricing; win larger contracts at optimized margins. Additional margin on $${(adjustedContract * 3 / 1000000).toFixed(1)}M pipeline: ${fmt(dollarLoss * 3)}`,
+        `Subcontractor Management → Relationship Strength: Cost accountability prevents finger-pointing; subs respect your cost controls, submit invoices on time. Dispute reduction + faster payment = ${fmt(adjustedContract * 0.02)} cash flow improvement`,
+        `Owner Relationships → Trust & Repeat Business: Transparent cost tracking improves project management; owners trust your change order process, accelerate CO approvals. CO approval rate 90% → 100% = ${fmt(co > 0 ? co * 0.1 : adjustedContract * 0.03)} additional recovery`,
+        `Lender / Bonding Capacity → Growth Capital: Improved margins and cost control strengthen financial statements; achieve better bonding limits, lower LC rates, increased credit facilities. Bonding capacity increase enables ${fmt(adjustedContract * 2)} larger projects`,
+        `Team Morale & Retention → Sustainable Operations: Profit sharing/bonus visibility when margins improve; crew sees shared success, reduces turnover from $50-60K/person costs. Turnover reduction saves ${fmt(labor * 0.08)}/year in replacement costs`,
+        `Market Positioning → Margin Leadership: Real-time cost dashboards differentiate your bid competitiveness; competitors still estimating manually are 10-15% slower on pricing decisions`,
+        `Organizational Learning → Scalability: Margin recovery discipline on this project creates repeatable playbook for pipeline; 4+ similar projects on books can apply same controls immediately`,
       ],
     },
   };
@@ -586,6 +730,64 @@ export function calculateOverheadBenchmarker(inputs: Record<string, any>): Calcu
         `Establish sustainable cost discipline culture`,
       ],
     },
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'If Action Taken (90-Day Overhead Reduction Plan)',
+        items: [
+          `Rent consolidation or renegotiation: save ${fmt(rentSavings)} (${rentPct.toFixed(1)}% → ${rentBench}%)`,
+          `Insurance carrier shopping and EMR improvements: save ${fmt(insSavings)}`,
+          `Admin process automation: eliminate redundant roles, save ${fmt(adminSavings)}`,
+          `Vehicle fleet optimization: save ${fmt(vehSavings)} through leasing restructure`,
+          `Total overhead reduction: ${fmt(totalPotentialSavings)}/year`,
+          `New overhead ratio: ${(ohPct - (totalPotentialSavings / rev * 100)).toFixed(1)}% (within benchmark)`,
+          `Financial impact: ${fmt(totalPotentialSavings)} in annual overhead savings`,
+        ],
+      },
+      ifNoAction: {
+        title: 'If No Action (Status Quo — 12 Months)',
+        items: [
+          `Overhead grows 3-5% annually = ${fmt(oh * 0.05)} additional cost next year`,
+          `Overhead ratio creeps to ${(ohPct + 2).toFixed(1)}% as revenue plateaus — margin compression`,
+          `Unable to compete on price: peers save ${fmt(totalPotentialSavings)} and undercut you by 1-2%`,
+          `Growth constrained by overhead leverage: every $1M new revenue requires ${fmt(oh / rev)} in new overhead`,
+          `Inability to offer competitive terms: overhead drag prevents volume rebates to major clients`,
+          `Bonding capacity stalled: underwriters see 20%+ overhead as risk; borrowing costs increase`,
+          `Cash flow pressure: uncontrolled overhead = reduced working capital and dividend capacity`,
+          `Opportunity cost: -(${fmt(oh * 0.05 * 5 + totalPotentialSavings)}) lost savings over 5 years`,
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS & PERFORMANCE PERCENTILES',
+      items: [
+        `Overhead as % of Revenue: You ${ohPct.toFixed(1)}% | Benchmark ${benchLow}-${benchHigh}% for ${tier} | Percentile: ${ohPct <= benchHigh ? '75th' : ohPct <= 22 ? '50th' : '25th'} | ${ohPct > benchHigh ? `Above benchmark by ${(ohPct - benchHigh).toFixed(1)}% — reduce to competitive position` : 'In line with industry peers'}`,
+        `Rent Expense (% of Revenue): You ${rentPct.toFixed(1)}% | Benchmark ${rentBench}% | Percentile: ${rentPct <= rentBench ? '80th' : rentPct <= 3.5 ? '60th' : '30th'} | ${rentPct > rentBench ? `Facility costs above benchmark — consolidate or renegotiate: save ${fmt(rentSavings)}` : 'Efficient facility costs'}`,
+        `Insurance Burden (% of Revenue): You ${insPct.toFixed(1)}% | Benchmark ${insBench}% | Percentile: ${insPct <= insBench ? '85th' : insPct <= 5 ? '60th' : '20th'} | ${insPct > insBench ? `Insurance premium-to-revenue above benchmark — shop carriers, improve safety metrics: save ${fmt(insSavings)}` : 'Competitive insurance costs'}`,
+        `Admin Cost Efficiency (% of Revenue): You ${adminPct.toFixed(1)}% | Benchmark ${adminBench}% | Percentile: ${adminPct <= adminBench ? '80th' : adminPct <= 8 ? '50th' : '15th'} | ${adminPct > adminBench ? `Administrative overhead high — integrate ERP to reduce manual work: save ${fmt(adminSavings)}` : 'Lean admin function'}`,
+        `Vehicle Cost Ratio (% of Revenue): You ${vehPct.toFixed(1)}% | Benchmark ${vehBench}% | Percentile: ${vehPct <= vehBench ? '85th' : vehPct <= 2 ? '60th' : '25th'} | ${vehPct > vehBench ? `Fleet costs high — evaluate lease vs. purchase, reduce idle capacity: save ${fmt(vehSavings)}` : 'Efficient fleet management'}`,
+        `Software & Tech (% of Revenue): You ${swPct.toFixed(1)}% | Benchmark ${swBench}% | Percentile: ${swPct <= swBench ? '75th' : swPct <= 1.5 ? '50th' : '25th'} | ${swPct > swBench ? 'Moderate software/tech spend — consolidate tools or negotiate volume licensing' : 'Efficient tech utilization'}`,
+      ],
+    },
+    projections: {
+      title: 'OVERHEAD PROJECTIONS & REDUCTION TIMELINE',
+      items: [
+        `30 Days (Status Quo): Overhead ${fmt(oh)} | Ratio ${ohPct.toFixed(1)}% | Savings $0 — No cost reduction initiatives; overhead ratio remains static`,
+        `90 Days (Rent + Insurance + Admin): Overhead ${fmt(oh - (rentSavings + insSavings + adminSavings))} | Ratio ${(ohPct - ((rentSavings + insSavings + adminSavings) / rev * 100)).toFixed(1)}% | Savings ${fmt(rentSavings + insSavings + adminSavings)} — 3 major cost reductions deployed; vehicle optimization still pending`,
+        `12 Months (Full Optimization): Overhead ${fmt(oh - totalPotentialSavings)} | Ratio ${(ohPct - (totalPotentialSavings / rev * 100)).toFixed(1)}% | Annual Savings ${fmt(totalPotentialSavings)} — Full cost reduction of ${fmt(totalPotentialSavings)} realized; ratio at or below benchmark`,
+        `24 Months (Sustained + Growth): Overhead ${fmt((oh - totalPotentialSavings) * 1.05)} | Ratio ${((oh - totalPotentialSavings) * 1.05 / (rev * 1.1) * 100).toFixed(1)}% | Annual Savings ${fmt(totalPotentialSavings * 1.1)} — Overhead leverage improves further with 10% revenue growth; ratio drops to ${((oh - totalPotentialSavings) * 1.05 / (rev * 1.1) * 100).toFixed(1)}%`,
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING IMPACT & STRATEGIC BENEFITS',
+      items: [
+        `Pricing Competitiveness: Lower overhead burden enables lower bid pricing without margin sacrifice. Win rate increases 2-3%, bid spread improves, capture more market share. Additional wins: ${fmt(rev * 0.15)} annual revenue from competitive positioning`,
+        `Profit Margin Expansion: Overhead savings flows directly to net profit. Net margin improves by ${gapPct > 0 ? gapPct.toFixed(1) : '0'}% — reinvest in growth or owner distributions. Additional net profit: ${fmt(totalPotentialSavings)}`,
+        `Bonding Capacity Growth: Improved profit margins and lower overhead create stronger financial position. Surety underwriters approve higher bonding limits; can bid on larger $5M+ projects. Bonding increase enables larger project pipeline access`,
+        `Cash Flow Liberation: Freed overhead capital cycles back to working capital. Stronger cash position reduces financing needs, improves liquidity ratios. Additional working capital: ${fmt(totalPotentialSavings)}; reduced LOC reliance`,
+        `Reinvestment Capacity: Freed capital enables strategic investments. Technology upgrades, team training, equipment modernization, or acquisition of smaller firms. Equity available for growth: ${fmt(totalPotentialSavings * 3)}/year reinvestment capacity`,
+      ],
+    },
   };
 }
 
@@ -741,6 +943,67 @@ export function calculateWinRateTracker(inputs: Record<string, any>): Calculatio
         `Reduce cost-per-win by focusing estimating effort`,
         `Build stronger client relationships for repeat business`,
         `Optimize bid volume to match available crew capacity`,
+      ],
+    },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Implement Strategic Bid Management (90 Days)',
+        items: [
+          'Structured bid/no-bid criteria eliminates unprofitable pursuits — save 200+ estimating hours/year',
+          'Win rate improves from current level to 25-30% industry top-quartile benchmark',
+          'Higher win rate on better-margin work = 3-5% gross margin improvement on won projects',
+          'Estimating team focuses on highest-probability work — morale and retention improve',
+          'Bid costs per win drop 30-40% through better targeting',
+          'Revenue per estimating dollar increases by 25%+ within 6 months',
+          'TOTAL 12-MONTH IMPACT: 15-20% revenue increase from same estimating capacity',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Continue Current Bidding Pattern',
+        items: [
+          'Low win rate burns estimating resources on projects you never win',
+          'Estimating team spreads too thin — bid quality drops, creating a negative spiral',
+          'Competitors with better targeting win the profitable work, leaving you scraps',
+          'Estimator burnout leads to turnover — replacement cost: 6-9 months salary per estimator',
+          'No learning loop means repeating the same mistakes — margins stay compressed',
+          'Revenue stays flat while competitors grow by bidding smarter',
+          'TOTAL 12-MONTH COST: Lost opportunity cost of 10-15% revenue growth + estimating waste',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS (ENR/CFMA Data)',
+      items: [
+        'Specialty contractor win rate national average: 15-20% (you should target 25%+)',
+        'Top-quartile firms win 25-30% of bids — but pursue 40% fewer projects (better selection)',
+        'Average bid cost for specialty trades: 1.5-3% of project value — wasted on losses',
+        'Best-in-class estimating efficiency: 1 estimator per $8-12M annual revenue',
+        'Proposal-to-interview ratio for top firms: 60%+ (weak firms: <30%)',
+        'Client retention rate for top-quartile: 70%+ repeat work (reduces bidding costs dramatically)',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 3: Bid/no-bid criteria implemented — eliminate bottom 20% of pursuits, estimating hours freed',
+        'MONTH 6: Win rate improves 3-5 points from better bid quality on fewer, targeted opportunities',
+        'MONTH 12: Revenue per estimator increases 20%+ — same team, better results',
+        'MONTH 24: Relationship bidding grows to 40%+ of pipeline (higher win rate, lower bid cost)',
+        'MONTH 36: Strategic positioning in top-quartile — winning profitable work consistently',
+        'WITHOUT ACTION: Win rate stays flat, estimating costs grow with inflation, margin pressure continues',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Win Rate → Revenue: Each 5-point improvement = 15-20% more won work from same effort',
+        'Win Rate → Margins: Selective bidding means only pursuing profitable work — margins improve 2-3 points',
+        'Win Rate → Cash Flow: More won work = more predictable revenue = better cash planning',
+        'Win Rate → Morale: Estimators who win more are more engaged — reduces 25% industry turnover rate',
+        'Win Rate → Growth: Higher hit rate builds reputation with GCs — leads to invited/negotiated work',
+        'Win Rate → Bonding: Consistent revenue supports bonding capacity increases for larger projects',
       ],
     },
   };
@@ -943,6 +1206,67 @@ export function calculateBidNoBidDecisionTool(inputs: Record<string, any>): Calc
         },
       ],
     },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Disciplined Bid Selection',
+        items: [
+          'Focus estimating resources on projects scoring 65+ — win rate improves from industry avg 18% to 28%+',
+          'Each additional win from same effort = incremental revenue at full margin (no additional overhead)',
+          'Eliminating poor-fit bids saves 150-300 estimating hours/year — redirect to pre-construction services',
+          'Better project selection reduces execution risk — fewer cost overruns and client disputes',
+          'Build reputation for reliability on right-fit projects — leads to negotiated/invited work',
+          'Team capacity freed for relationship-building with strategic GC partners',
+          'TOTAL IMPACT: 20-30% improvement in estimating ROI within 6 months',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Bid Everything That Moves',
+        items: [
+          'Resources spread across too many pursuits — bid quality suffers across the board',
+          'Win low-scoring projects with thin margins → execution problems → disputed work → payment delays',
+          'Estimating team burns out chasing everything — top talent leaves for firms with strategy',
+          'Reputation suffers from poor execution on mismatched projects',
+          'No differentiation from competitors — compete on price alone, margin race to bottom',
+          'Cash flow volatility from unpredictable project mix',
+          'TOTAL COST: 15-25% margin erosion on poorly-fit projects + estimating waste',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        'Top-performing specialty contractors bid on only 30-40% of available opportunities (selective)',
+        'Firms with formal bid/no-bid criteria win 25-35% of pursuits vs. 12-18% for reactive bidders',
+        'Average estimating cost per bid: $5,000-$25,000 depending on project complexity',
+        'Industry-leading bid-to-win cost ratio: <$15,000 per win (poor performers: $50,000+)',
+        'Repeat client win rate: 45-60% vs. cold bid win rate: 10-15%',
+        'Projects outside core expertise have 3x higher chance of margin erosion (CFMA data)',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 3: Bid/no-bid scoring operational — 25% fewer bids, each with higher quality',
+        'MONTH 6: Win rate on targeted bids improves to 25%+ — revenue per estimator up 15%',
+        'MONTH 12: Strategic bid portfolio yields 3-5% better margins on won work',
+        'MONTH 24: 50%+ of wins come from repeat/invited work — dramatically lower bid costs',
+        'MONTH 36: Recognized as go-to specialist in core trades — premium pricing power emerges',
+        'WITHOUT ACTION: Continues bidding treadmill — costs rise, margins compress, talent leaves',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Bid Selection → Margins: Only pursuing profitable work lifts blended margin 2-4 points',
+        'Bid Selection → Execution: Right-fit projects reduce change orders, rework, and disputes by 40%',
+        'Bid Selection → Reputation: Consistent quality on right-fit work builds GC trust and referrals',
+        'Bid Selection → Cash Flow: Profitable projects with reliable clients = predictable cash cycle',
+        'Bid Selection → Team: Focused, winnable pursuits keep estimators motivated and productive',
+        'Bid Selection → Growth: Strategic positioning enables expansion into higher-value market segments',
+      ],
+    },
   };
 }
 
@@ -1080,6 +1404,67 @@ export function calculatePrequalificationScorecard(inputs: Record<string, any>):
         `Focused estimating resources on highest-probability work`,
       ],
     },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Systematic Prequalification Process',
+        items: [
+          'Every bid opportunity scored objectively before committing estimating resources',
+          'Projects below 50 threshold rejected automatically — saves 200+ estimating hours/year',
+          'Higher-scoring pursuits receive dedicated resources — bid quality and win rate improve',
+          'Execution risk drops dramatically — only pursue work aligned with actual capabilities',
+          'Capability gaps identified early enable strategic investment in certifications/equipment',
+          'Client portfolio shifts toward best-fit relationships — higher repeat work rate',
+          'TOTAL IMPACT: 30%+ reduction in wasted estimating effort, 25% better project outcomes',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Pursue Without Screening',
+        items: [
+          'Bid on mismatched projects → win occasionally → struggle to execute → margin erosion',
+          'Compliance gaps discovered mid-project → costly remediation or contract penalties',
+          'Geographic overreach strains supervision and logistics — hidden costs eat margins',
+          'Estimating resources wasted on work you cannot competitively win',
+          'Reputation damage from poor performance on ill-suited projects',
+          'No strategic direction for capability development — reactive growth only',
+          'TOTAL COST: 10-20% margin erosion on poorly-qualified projects + opportunity cost',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        'Firms with formal prequalification score 70+ average win rate: 28-35%',
+        'Projects matched to core competencies have 40% lower cost overrun rates',
+        'Geographic sweet spot: <30 miles from office yields best supervision and profitability',
+        'Davis-Bacon/union compliance adds 8-15% to project cost — must be factored in bid',
+        'Top-quartile specialty contractors pass on 60%+ of available opportunities (discipline wins)',
+        'Client type impact: Government projects avg 12% lower margins but higher payment certainty',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 3: Prequalification scoring active — immediate reduction in wasted estimating effort',
+        'MONTH 6: Portfolio quality improves — higher-scoring projects yield 2-3% better margins',
+        'MONTH 12: Execution track record on qualified work improves reputation with key GCs',
+        'MONTH 24: Strategic capability investments close identified gaps — score range expands',
+        'MONTH 36: Positioned as reliable specialist — invited bids increase 40%+',
+        'WITHOUT ACTION: Continue random project selection — inconsistent results and stalled growth',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Prequalification → Estimating: Focused effort on qualified work = higher bid quality = higher win rate',
+        'Prequalification → Execution: Right-fit projects reduce RFIs, rework, and disputes',
+        'Prequalification → Safety: Projects matching safety capabilities avoid incident spikes and EMR increases',
+        'Prequalification → Cash Flow: Qualified clients pay more reliably — improves collection cycle',
+        'Prequalification → Growth: Strategic capability gaps identified → targeted investment → expanded opportunity set',
+        'Prequalification → Bonding: Consistent profitable execution strengthens surety relationship',
+      ],
+    },
   };
 }
 
@@ -1128,6 +1513,67 @@ export function calculateBondingCapacityCalculator(inputs: Record<string, any>):
     ]},
     measurement: { title: 'MEASUREMENT:', items: [`Quarterly working capital tracking (target: ${fmt(wc * 1.2)})`, `Bonding utilization rate (target: <70%)`, `Single project capacity vs. target project size`, `Net worth growth rate (target: 10%+ annually)`] },
     expectedOutcomes: { title: 'EXPECTED OUTCOMES:', items: [`Increase aggregate capacity from ${fmt(aggCap)} to ${fmt(aggCap * 1.3)}`, `Grow single project limit to ${fmt(singleMax * 1.3)}`, `Maintain utilization below 70% for growth flexibility`, `Support pursuit of larger, more profitable projects`] },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Strengthen Bonding Position',
+        items: [
+          'Improve working capital ratio to 1.5:1 — unlocks next tier of project sizes',
+          'Clean up balance sheet: reduce short-term debt, improve current ratio within 6 months',
+          'Establish CPA-prepared financials and proactive surety relationship',
+          'Each $100K improvement in working capital typically adds $500K-$1M in single-project capacity',
+          'Stronger bonding opens access to government/institutional projects (60% of large-project market)',
+          'Pre-qualify with 2-3 surety companies for competitive rates and faster turnaround',
+          'TOTAL IMPACT: 25-50% bonding capacity increase within 12 months',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Ignore Bonding Position',
+        items: [
+          'Current capacity limits you to projects under your single-project ceiling',
+          'Cannot pursue bonded work — miss 60%+ of government and institutional opportunities',
+          'Competitors with stronger bonding win larger projects and gain market share',
+          'Surety may tighten terms at renewal if financials deteriorate',
+          'Revenue growth capped by project size ceiling — cannot break through',
+          'Limited leverage when negotiating with GCs — they know your ceiling',
+          'TOTAL COST: Missed opportunity on projects above your current capacity',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS (Surety & Fidelity Association)',
+      items: [
+        'Typical bonding capacity: 10-20x working capital for established contractors',
+        'Top-tier surety relationship: 15-20x multiplier with audited financials and strong track record',
+        'Working capital benchmark: Specialty contractors should maintain 1.2-1.5:1 current ratio',
+        'Net worth to backlog ratio: Strong firms maintain 1:3 to 1:5 ratio',
+        'Surety industry approval rate: 85%+ for firms with CPA-prepared financials (vs 60% without)',
+        'Average single-project limit: 40-60% of aggregate program for well-positioned firms',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 6: Improved financials submitted to surety — capacity review initiated',
+        'MONTH 12: 15-25% capacity increase unlocks mid-tier project opportunities',
+        'MONTH 24: Track record on larger bonded projects builds surety confidence — another 20% increase',
+        'MONTH 36: Full program expansion — aggregate capacity supports revenue growth to next level',
+        'WITHOUT ACTION: Bonding capacity stays flat — revenue ceiling remains in place',
+        'CRITICAL: Each $1M in new bonded revenue at 8% margin = $80K additional profit',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Bonding → Revenue: Higher capacity opens larger project opportunities — 30-50% revenue growth potential',
+        'Bonding → Margins: Larger projects often have better margins than small competitive bids',
+        'Bonding → Client Base: Government and institutional clients require bonds — access to new market',
+        'Bonding → Financing: Strong surety relationship signals financial health to banks — better LOC terms',
+        'Bonding → Reputation: Bonded contractor status is a competitive differentiator with GCs',
+        'Bonding → Stability: Larger, longer projects provide more predictable revenue and cash flow',
+      ],
+    },
   };
 }
 
@@ -1178,6 +1624,67 @@ export function calculateInsuranceGapAnalyzer(inputs: Record<string, any>): Calc
     ]},
     measurement: { title: 'MEASUREMENT:', items: [`Annual coverage-to-revenue ratio (target: >150%)`, `Premium cost as % of revenue (target: 3-5%)`, `Claims frequency and severity trend`, `EMR trajectory for workers comp pricing`] },
     expectedOutcomes: { title: 'EXPECTED OUTCOMES:', items: [`Close ${fmt(totalGap)} in coverage gaps`, `Protect against catastrophic uninsured losses`, `Meet all GC/client insurance requirements`, `Reduce premium costs through EMR improvement and carrier competition`] },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Close Insurance Gaps',
+        items: [
+          'Comprehensive coverage eliminates catastrophic risk exposure — protect your entire net worth',
+          'Proper limits satisfy GC requirements — no longer passed over for undercovered subs',
+          'Annual policy review ensures coverage grows with revenue — no gaps as you scale',
+          'Umbrella/excess policy closes aggregate limit gaps for pennies per revenue dollar',
+          'Workers comp audit preparation eliminates surprise year-end premium adjustments',
+          'Professional liability (if applicable) protects against design-assist and value-engineering claims',
+          'TOTAL IMPACT: Full risk transfer at 2-4% of revenue — protects 100% of business value',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Operate With Coverage Gaps',
+        items: [
+          'Single large claim could exceed policy limits — personal assets exposed',
+          'GCs discover gaps during prequalification — disqualified from bidding',
+          'Subcontractor default without proper coverage = you absorb the loss',
+          'Workers comp misclassification triggers audit penalties (200-300% of underpaid premium)',
+          'Property damage or injury claim exceeding limits = business-ending event',
+          'Revenue growth without coverage increases = growing exposure every month',
+          'TOTAL RISK: Uninsured exposure could exceed entire business net worth',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        'Insurance cost as % of revenue: Specialty contractors avg 2.5-4.5% (varies by trade)',
+        'GL limits: $1M/$2M standard; $2M/$4M for commercial GC requirements',
+        'Umbrella coverage: Top-quartile firms carry 2-5x their GL aggregate',
+        'Workers comp EMR below 1.0 saves 10-30% on premium vs. industry average',
+        'Auto liability: $1M CSL minimum — many GCs require $2M+',
+        'Professional liability: Growing requirement for design-assist and BIM-involved subs',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 3: Policy review complete — gaps identified and coverage bound',
+        'MONTH 6: Updated certificates satisfy all current GC requirements — bid on previously blocked work',
+        'MONTH 12: Clean claims history + proper coverage = 5-10% premium reduction at renewal',
+        'MONTH 24: EMR improvement from safety investment compounds insurance savings',
+        'MONTH 36: Insurance program supports 50%+ revenue growth without coverage concerns',
+        'WITHOUT ACTION: Every day of operation with gaps is a bet against a claim that could end the business',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Insurance → Bidding: Proper coverage = prequalification approval = access to 40%+ more opportunities',
+        'Insurance → Cash Flow: No surprise claims or audit penalties disrupting cash position',
+        'Insurance → Bonding: Sureties review insurance program — gaps can reduce bonding capacity',
+        'Insurance → EMR: Proper WC coverage + safety program = lower EMR = lower premiums (compounding)',
+        'Insurance → Growth: Scalable coverage program grows with revenue without firefighting gaps',
+        'Insurance → Value: Insured business with clean history commands premium valuation if sold',
+      ],
+    },
   };
 }
 
@@ -1227,6 +1734,67 @@ export function calculateEMRSimulator(inputs: Record<string, any>): CalculationR
     ]},
     measurement: { title: 'MEASUREMENT:', items: [`Monthly TIR and DART rate tracking`, `EMR projection updated quarterly`, `Near-miss reports per month (target: 5+ per 50 employees)`, `Safety training hours per employee (target: 20+ hours/year)`, `Workers comp premium trend year-over-year`] },
     expectedOutcomes: { title: 'EXPECTED OUTCOMES:', items: [`Reduce EMR from ${emr.toFixed(2)} to ${targetEMR.toFixed(2)} within ${claimFreeYears > 0 ? claimFreeYears : 2} years`, `Save ${fmt(savings)}/year in workers comp premiums`, `Reduce incident rate from ${tir.toFixed(1)} to below 3.0`, `Improve bid competitiveness (many GCs require EMR <1.0)`, `Protect employees and reduce human cost of injuries`] },
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Invest in Safety & EMR Reduction',
+        items: [
+          `Implement comprehensive safety management system: ${fmt(50000)} annual investment prevents 60% of incidents (est. ${fmt(savings * 0.6)}/year savings)`,
+          `Hire dedicated safety manager ($80K salary): payback in 9-12 months from premium reduction of ${fmt(actualPremium - benchPremium)}`,
+          `Quarterly safety training program: 4 hours/employee × crew size prevents TIR escalation, maintains EMR trajectory`,
+          `Install job-site hazard barriers and equipment: ${fmt(25000)} capital, extends to all future projects`,
+          `Workers' comp cost reduction timeline: Month 3 (10%), Month 6 (25%), Month 12 (40% below current premium)`,
+          `Reduced claim frequency leads to lower experience mod on next policy renewal in 12 months`,
+          `Insurance broker reports improved loss history; renegotiate premiums down ${fmt(actualPremium - benchPremium)} annually`
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Accept Current EMR Trajectory',
+        items: [
+          `EMR escalates to ${(emr + 0.5).toFixed(2)} within 12 months if incidents continue at current rate`,
+          `Insurance premiums increase by ~${fmt(basePremium * 0.08)}/year (8% annual increase typical for poor safety history)`,
+          `Cumulative loss over 3 years: ${fmt((actualPremium - benchPremium) * 3)} in excess premiums vs. industry peers`,
+          `Crew morale deteriorates; increased turnover adds 15-20% recruiting/training costs for replacement workers`,
+          `Bonding capacity constrained; underwriters may reduce limits or require additional cash collateral`,
+          `Lost bids due to insurance gap: estimated ${fmt(basePremium * 0.5)} annual revenue from clients requiring lower EMR`,
+          `OSHA recordables accumulate; potential citations add ${fmt(15000)} in fines plus remediation costs`
+        ]
+      }
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        `EMR rating: Current ${emr.toFixed(2)} vs. industry median 0.85-1.05; top quartile <0.75 (${((1.05 - emr) / 1.05 * 100).toFixed(0)}th percentile)`,
+        `Insurance premium efficiency: Paying ${((actualPremium / basePremium * 100 - 100).toFixed(1))}% above standard rate; industry average variance ±15%`,
+        `Incident frequency: TIR ${tir.toFixed(2)} vs. construction industry average 3.4 (BLS); critical if above 4.5`,
+        `Workers' comp penetration: EMR mod of ${(emr > 1 ? '+' : '')}${((emr - 1) * 100).toFixed(0)}% vs. benchmark 0%; each 0.1 EMR reduction saves ~${fmt(basePremium * 0.05)}/year`,
+        `Claim free years bonus: ${claimFreeYears} claim-free years yields 5-7% premium discount; reset to zero after incident`,
+        `Premium trend: Construction sector 3-5% annual increase; maintaining EMR flat captures savings from volume growth`,
+        `Fatality frequency: ${fat} fatalities benchmarks against OSHA national rate of 3.5 per 100K construction workers (ABC/CFMA peer groups)`
+      ]
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        `12-month: If safety actions implemented, EMR trajectory ${(emr * 0.95).toFixed(2)} (-5%), premium savings ${fmt((actualPremium - benchPremium) * 0.25)} (25% reduction begins)`,
+        `24-month: EMR reaches ${targetEMR.toFixed(2)} with sustained initiatives, premium stabilizes at ${fmt(benchPremium + (actualPremium - benchPremium) * 0.1)}, cumulative savings ${fmt((actualPremium - benchPremium) * 1.5)} vs. trend-line premium increases`,
+        `36-month: EMR locked at target ${targetEMR.toFixed(2)}, insurance competitive bidding captures additional ${fmt(basePremium * 0.06)} discount from top-quartile safety rating, 3-year cumulative savings ${fmt(savings * 2.5)}`,
+        `Revenue impact: Improved safety rating qualifies for 5 additional RFQs annually (est. ${fmt(basePremium * 0.3)} incremental bid opportunities from owner-mandated low-EMR requirements)`,
+        `ROI on safety investment: ${fmt(50000)} upfront + ${fmt(80000)} annual salary vs. ${fmt((actualPremium - benchPremium) * 2.5)} insurance savings over 2 years = ${(((actualPremium - benchPremium) * 2.5 / (50000 + 80000)) * 100).toFixed(0)}% payback`,
+        `Compounding: Each claim-free year earns 2-3% additional discount; year 3 premium is ${(((benchPremium + 50000/2.5) / actualPremium * 100 - 100)).toFixed(0)}% lower than baseline`
+      ]
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        `Safety culture → Employee retention improvement: Reduced turnover saves ${fmt(basePremium * 0.2)} annually in recruitment/training; higher crew expertise boosts project margin by 1-2%`,
+        `Lower EMR → Bonding capacity increase: Insurance company confidence increases available bond limits by ~${(((actualPremium - benchPremium) / actualPremium * 100)).toFixed(0)}%, enabling pursuit of larger contracts`,
+        `Claim frequency reduction → Reduced OSHA scrutiny: Fewer recordables = fewer potential citations; avoided penalties + remediation ≈ ${fmt(50000)}-${fmt(100000)} over 3 years`,
+        `Improved safety metrics → Sales advantage: Can undercut competitors by including "industry-leading safety EMR" in RFQ responses; win-rate improvement of 2-4% adds ~${fmt(basePremium * 0.2)} revenue`,
+        `Cost of claims (indemnity + defense) → Cash flow improvement: Each prevented claim saves 12-18 months of litigated payout flow; improves working capital by ~${fmt(actualPremium * 0.5)}`,
+        `Insurance price leverage → Reduces cost basis: 5-year safety premium savings of ${fmt((actualPremium - benchPremium) * 5)} improves EBITDA margin by ~${((((actualPremium - benchPremium) * 5 / (basePremium * 10)) * 100)).toFixed(1)}%`
+      ]
+    },
   };
 }
 
@@ -1279,6 +1847,67 @@ export function calculateSafetyMaturityAssessor(inputs: Record<string, any>): Ca
     ]},
     measurement: { title: 'MEASUREMENT:', items: [`Monthly safety maturity score (target: 70+)`, `Incident frequency rate trend (target: <3.0)`, `Training hours per employee (target: 20+ hours/year)`, `Near-miss reports per month (target: 3+ per 50 employees)`, `Management safety walk frequency (target: weekly)`] },
     expectedOutcomes: { title: 'EXPECTED OUTCOMES:', items: [`Improve maturity from ${level} to next level within 12 months`, `Reduce incident rate from ${ifr.toFixed(1)} to below 3.0`, `Lower workers comp premiums by 15-30% through EMR improvement`, `Reduce employee turnover through stronger safety culture`, `Meet all GC and client safety prequalification requirements`] },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Advance Safety Maturity',
+        items: [
+          'Move from reactive to proactive safety culture — incident rates drop 40-60% within 12 months',
+          'EMR improvement of 0.10-0.20 points saves 10-20% on workers comp premium',
+          'OSHA citation risk drops dramatically — avoid $15,000-$156,000 per violation penalties',
+          'Employee retention improves — workers prefer safe jobsites (reduces 25% industry turnover)',
+          'GC prequalification scores improve — access to better-paying, safer project opportunities',
+          'Reduced incident rates lower indirect costs (lost productivity, investigation, morale) by 4-6x direct costs',
+          'TOTAL IMPACT: ROI of 300-500% on safety program investment within 18 months',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Maintain Current Safety Level',
+        items: [
+          'Every year without improvement increases probability of serious incident',
+          'Workers comp costs increase with each claim — compounding EMR penalty',
+          'GCs increasingly require advanced safety programs — you get screened out',
+          'OSHA targeting: contractors with poor records receive more inspections',
+          'Employee lawsuits from unsafe conditions = legal costs + reputation damage',
+          'Insurance market hardening = carriers drop contractors with poor safety records',
+          'TOTAL RISK: Single fatality costs $1M-$5M+ in direct/indirect costs and permanently damages reputation',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS (BLS/OSHA)',
+      items: [
+        'Construction industry average TRIR: 2.8 per 100 workers (2024 BLS data)',
+        'Top-quartile specialty contractors: TRIR below 1.5 per 100 workers',
+        'OSHA recordable rate for best-in-class subs: <1.0 per 100 workers',
+        'Average EMR for all contractors: 1.00 — top performers: 0.65-0.75',
+        'Safety investment benchmark: 2-3% of payroll for comprehensive program',
+        'ROI on safety: $4-$6 saved for every $1 invested (OSHA study)',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 6: Leading indicators (near-miss reporting, toolbox talks) improve — lagging indicators begin following',
+        'MONTH 12: TRIR drops measurably — workers comp audit reflects fewer claims',
+        'MONTH 18: EMR recalculation shows improvement — premium savings begin compounding',
+        'MONTH 24: Safety record qualifies for preferred programs with major GCs',
+        'MONTH 36: Cultural shift complete — safety is embedded in operations, not a separate program',
+        'WITHOUT ACTION: Each year at current level increases statistical probability of serious incident',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Safety → Insurance: Better EMR = lower premiums = reduced overhead = more competitive bids',
+        'Safety → Bidding: GC prequalification increasingly weighted toward safety — opens/closes doors',
+        'Safety → Retention: Safe worksite is #1 factor in craft worker retention (reduces turnover costs)',
+        'Safety → Productivity: Fewer incidents = fewer disruptions = higher crew utilization rate',
+        'Safety → Legal: Proactive program is strongest defense against OSHA citations and lawsuits',
+        'Safety → Culture: Safety maturity signals operational discipline — attracts better clients and talent',
+      ],
+    },
   };
 }
 
@@ -1322,6 +1951,67 @@ export function calculateToolboxTalkGenerator(inputs: Record<string, any>): Calc
       { title: 'ACTIVITY SUGGESTIONS:', items: activities },
       { title: 'DOCUMENTATION:', items: [`Record date, time, topic, and attendees`, `Have all ${crewSize} crew members sign attendance sheet`, `Note any hazards identified during discussion`, `File with safety records — required for OSHA compliance`, `Reference: OSHA ${oshaRefs[hazard] || '1926.21'}`] },
     ]},
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Implement Weekly Toolbox Talks',
+        items: [
+          'Consistent safety communication reduces incident rates by 30-50% (CPWR research)',
+          'Documented toolbox talks satisfy OSHA training requirements — reduces citation risk',
+          'Trade-specific content addresses actual hazards your crews face daily',
+          'Employee engagement in safety meetings builds accountability and peer-to-peer safety culture',
+          '15-minute weekly investment per crew yields thousands in avoided incident costs',
+          'Creates paper trail demonstrating safety commitment — critical for litigation defense',
+          'TOTAL IMPACT: Minimal cost, maximum risk reduction — highest ROI safety investment available',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Skip Regular Safety Communication',
+        items: [
+          'Crews default to shortcuts when not regularly reminded of hazards and procedures',
+          'No documented training = no defense when OSHA investigates an incident',
+          'Incident rates drift upward without consistent reinforcement of safe practices',
+          'New hires never get trade-specific hazard awareness beyond orientation',
+          'EMR increases over time as preventable incidents accumulate',
+          'GC audits flag missing toolbox talk documentation — reduced bid invitations',
+          'TOTAL RISK: Preventable incidents that proper communication would have avoided',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        'Top safety performers: Weekly toolbox talks with documented attendance (100% compliance)',
+        'Industry standard: Minimum monthly safety meetings — weekly is best practice',
+        'OSHA expectation: Regular, documented safety communication is part of compliance',
+        'Content should address top 4 construction fatality causes: Falls, Struck-by, Electrocution, Caught-in',
+        'Engagement metric: Best firms achieve 90%+ crew participation rates',
+        'Leading indicator: Firms with weekly talks report 45% more near-miss reporting (early warning system)',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 1: Toolbox talk program launched — immediate OSHA compliance improvement',
+        'MONTH 3: Crews begin self-identifying hazards — leading indicator improvement',
+        'MONTH 6: Near-miss reporting increases 40%+ — catching problems before they become incidents',
+        'MONTH 12: Recordable incident rate drops measurably — insurance renewal reflects improvement',
+        'MONTH 24: EMR improvement from reduced incidents = premium savings of 10-20%',
+        'WITHOUT ACTION: Every week without safety communication increases baseline risk incrementally',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Toolbox Talks → Incidents: Regular communication prevents the majority of common construction injuries',
+        'Toolbox Talks → EMR: Fewer incidents = lower EMR = lower insurance premiums (compounds annually)',
+        'Toolbox Talks → OSHA: Documented program is strongest defense against citations ($15K-$156K each)',
+        'Toolbox Talks → Culture: Consistent messaging builds safety-first mindset at crew level',
+        'Toolbox Talks → Retention: Workers feel valued when company invests in their safety',
+        'Toolbox Talks → Litigation: Documentation provides critical evidence in injury claims defense',
+      ],
+    },
   };
 }
 
@@ -1368,6 +2058,67 @@ export function calculateRevenueConcentrationAnalyzer(inputs: Record<string, any
     ]},
     measurement: { title: 'MEASUREMENT:', items: [`Quarterly HHI index tracking (target: <0.15)`, `Top client % of revenue (target: <25%)`, `New client wins per quarter (target: 3-5)`, `Geographic revenue split tracking`] },
     expectedOutcomes: { title: 'EXPECTED OUTCOMES:', items: [`Reduce top client concentration from ${top1Pct.toFixed(0)}% to <25%`, `Lower HHI from ${hhi.toFixed(2)} to <0.15`, `Build resilient revenue base that survives any single client loss`, `Expand geographic footprint to reduce local market risk`] },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Diversify Revenue Sources',
+        items: [
+          'Reduce dependency on top client below 30% of revenue within 18 months',
+          'Develop 3-5 new client relationships generating $500K+ each annually',
+          'Geographic diversification reduces regional economic risk exposure',
+          'Service line expansion (maintenance, service, retrofit) provides counter-cyclical revenue',
+          'Balanced portfolio survives loss of any single client without existential threat',
+          'Stronger negotiating position — not desperate for any one client relationship',
+          'TOTAL IMPACT: Business survivability and valuation increase 30-50% with proper diversification',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Maintain Concentrated Revenue',
+        items: [
+          'Loss of top client = immediate revenue crisis (potentially 30-50%+ revenue loss)',
+          'Concentrated client has disproportionate leverage on pricing and terms',
+          'Economic downturn in one sector devastates entire business',
+          'Key-person risk: relationship depends on individual contacts who may leave',
+          'Business valuation depressed — buyers see concentration as high risk (2-3x discount)',
+          'Growth is limited by largest client capacity — not your own capabilities',
+          'TOTAL RISK: Business viability depends on decisions made by someone else',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        'Healthy concentration: No single client >25% of revenue (CFMA guideline)',
+        'Best practice: Top 3 clients combined <50% of total revenue',
+        'Surety standard: Sureties flag concentration above 30% as risk factor',
+        'Business valuation: Concentrated businesses sell at 2-3x EBITDA vs 4-6x for diversified',
+        'Client retention: Plan for 10-15% annual client churn as baseline',
+        'Geographic diversification: Best firms operate in 2-3 distinct markets minimum',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 6: Active business development — 2-3 new client relationships in pipeline',
+        'MONTH 12: New clients generating 10-15% of revenue — concentration begins decreasing',
+        'MONTH 18: Top client drops below 35% threshold — reduced dependency risk',
+        'MONTH 24: Balanced portfolio with 6-8 significant clients — survives any single loss',
+        'MONTH 36: Service diversification adds 15-20% counter-cyclical revenue',
+        'WITHOUT ACTION: Every month of concentration is a month closer to a crisis you cannot predict',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Concentration → Pricing: Dependent clients negotiate harder — you accept thinner margins to keep them',
+        'Concentration → Cash Flow: Single client payment delay cascades through entire business',
+        'Concentration → Bonding: Sureties reduce capacity when they see client concentration risk',
+        'Concentration → Valuation: Business worth 40-60% less to buyers with concentrated revenue',
+        'Concentration → Growth: Capped by client capacity — cannot scale beyond their project volume',
+        'Concentration → Stress: Owner personally carries existential business risk every day',
+      ],
+    },
   };
 }
 
@@ -1418,6 +2169,67 @@ export function calculateGrowthReadinessAssessor(inputs: Record<string, any>): C
     ]},
     measurement: { title: 'MEASUREMENT:', items: [`Quarterly growth readiness score (target: 70+)`, `Revenue per key employee (target: ${fmt(500000)})`, `Backlog months (target: 4-6 months)`, `Systems utilization and adoption rates`, `Working capital and credit availability`] },
     expectedOutcomes: { title: 'EXPECTED OUTCOMES:', items: [`Improve readiness score from ${totalScore} to 70+ within 6 months`, `Support ${growth}%+ annual growth without operational breakdown`, `Build scalable infrastructure for long-term success`, `Reduce key-person risk through depth and documentation`] },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Prepare Infrastructure for Growth',
+        items: [
+          'Build scalable systems BEFORE pursuing growth — avoid the "growth trap" that kills contractors',
+          'Hire/develop project managers and foremen ahead of revenue — 6-month lead time for talent',
+          'Technology investment (estimating, project management, accounting) scales with you, not against you',
+          'Working capital positioned to support 20-30% growth without emergency financing',
+          'Safety program scalable to larger workforce — EMR stays low as you grow',
+          'Leadership development creates management depth — owner not the bottleneck',
+          'TOTAL IMPACT: Sustainable 15-25% annual growth with maintained or improved margins',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Grow Without Preparation',
+        items: [
+          'Revenue increases but margins compress — "growing broke" is #1 contractor failure mode',
+          'Cash flow crisis as receivables grow faster than collections (growth eats cash)',
+          'Quality drops as crews stretch beyond supervision capacity — rework increases',
+          'Key employees burn out managing chaos — best people leave first',
+          'Safety incidents increase with rapid growth — EMR spikes, insurance costs surge',
+          'Owner becomes the bottleneck — every decision flows through one person',
+          'TOTAL RISK: 60% of contractor failures happen during or immediately after rapid growth',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        'Sustainable growth rate for specialty contractors: 15-25% annually (CFMA)',
+        'Growth failure rate: 60% of contractors that grow >30% in a year experience financial distress',
+        'Working capital needed for growth: $15-$25 of working capital per $100 of new revenue',
+        'Management span: 1 PM per $2-4M in active project value (exceed this and quality drops)',
+        'Foreman-to-crew ratio: 1:6-8 optimal — above 1:12, safety and productivity decline',
+        'Technology readiness: Top-quartile firms invest 1-2% of revenue in technology annually',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 6: Infrastructure investments in place — systems, people, working capital aligned',
+        'MONTH 12: Begin controlled growth at 15-20% — margins maintained through preparation',
+        'MONTH 18: Second growth phase — leverage new capacity for additional revenue',
+        'MONTH 24: Compounding effect — previous investments create capacity for next phase',
+        'MONTH 36: Revenue at 150-175% of current level with maintained or improved margins',
+        'WITHOUT PREPARATION: Growth at same pace = margin compression, cash crisis within 12-18 months',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Growth Readiness → Margins: Prepared growth maintains margins; unprepared growth crushes them',
+        'Growth Readiness → Cash Flow: Working capital preparation prevents the growth cash trap',
+        'Growth Readiness → Talent: Planned hiring attracts better candidates than desperate hiring',
+        'Growth Readiness → Safety: Scalable safety program prevents EMR spike during expansion',
+        'Growth Readiness → Bonding: Organized financials support bonding capacity expansion',
+        'Growth Readiness → Owner Quality of Life: Systems reduce owner dependency — business runs, not chaos',
+      ],
+    },
   };
 }
 
@@ -1466,6 +2278,67 @@ export function calculateTechStackGrader(inputs: Record<string, any>): Calculati
     ]},
     measurement: { title: 'MEASUREMENT:', items: [`Quarterly tech maturity score (target: 70+)`, `User adoption rate (target: >80% active users)`, `Manual data entry hours reduced (target: 50% reduction)`, `Time-to-insight for job cost data (target: same-day)`] },
     expectedOutcomes: { title: 'EXPECTED OUTCOMES:', items: [`Improve tech grade from ${grade} to ${totalScore >= 55 ? 'A' : 'B+'}`, `Reduce admin overhead by 15-25% through automation`, `Gain real-time visibility into project costs and schedules`, `Improve decision-making speed with integrated data`] },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Modernize Technology Stack',
+        items: [
+          'Integrated estimating-to-project management reduces data entry by 60% — fewer errors',
+          'Real-time financial visibility eliminates month-end surprises on project profitability',
+          'Mobile field technology enables daily reporting — issues caught in hours, not weeks',
+          'Automated invoicing and payment tracking accelerates collections by 5-10 days',
+          'Document management reduces RFI response time from days to hours',
+          'Data-driven decisions replace gut feelings — every project decision backed by numbers',
+          'TOTAL IMPACT: 3-8% overhead reduction + 15-20% productivity improvement within 12 months',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Maintain Legacy Systems',
+        items: [
+          'Manual processes consume 15-25% of office staff time — invisible cost that grows with revenue',
+          'Spreadsheet-based project tracking = errors, version conflicts, missed deadlines',
+          'No real-time cost visibility = cost overruns discovered too late to correct',
+          'Younger talent expects modern tools — legacy systems drive away best candidates',
+          'Competitors with better tech bid faster, manage tighter, win more',
+          'Data trapped in silos — no way to analyze trends across projects for strategic decisions',
+          'TOTAL COST: 5-10% of revenue lost to inefficiency, errors, and missed opportunities',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        'Technology spend: Top-quartile contractors invest 1.5-2.5% of revenue in technology',
+        'Cloud adoption: 75%+ of top performers use cloud-based project management (vs 40% industry avg)',
+        'Mobile field reporting: Best-in-class achieve daily updates from 95%+ of active jobsites',
+        'Integration level: Leading firms have 3-5 integrated systems (estimating, PM, accounting, field, HR)',
+        'Time tracking automation: Digital time capture reduces payroll processing time by 70%',
+        'Document management: Construction-specific DMS reduces RFI cycle time by 50%',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 3: Core systems selected and implementation begins — team training underway',
+        'MONTH 6: Primary systems live — immediate data quality and visibility improvements',
+        'MONTH 12: Full adoption — overhead reduction begins, project visibility is real-time',
+        'MONTH 18: Integration benefits compound — automated workflows save 10+ hours/week office staff',
+        'MONTH 24: Data-driven culture established — historical analysis improves estimating accuracy',
+        'WITHOUT ACTION: Every year of delay widens the gap with technology-forward competitors',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Technology → Estimating: Better historical data = more accurate bids = better margins',
+        'Technology → Cash Flow: Automated invoicing + payment tracking accelerates collections',
+        'Technology → Safety: Digital safety management improves compliance documentation and tracking',
+        'Technology → Talent: Modern tools attract younger, tech-savvy project managers and estimators',
+        'Technology → Scalability: Systems-dependent operations scale; people-dependent operations hit ceilings',
+        'Technology → Valuation: Technology-enabled business commands premium on sale (transferable operations)',
+      ],
+    },
   };
 }
 
@@ -1510,6 +2383,67 @@ export function calculateChangeOrderTrendTracker(inputs: Record<string, any>): C
     ]},
     measurement: { title: 'MEASUREMENT:', items: [`CO % of contract (target: <${benchCO}%)`, `Approval cycle time (target: <7 days)`, `Denial rate (target: <15%)`, `Root cause tracking by category`] },
     expectedOutcomes: { title: 'EXPECTED OUTCOMES:', items: [`Reduce CO rate from ${coPctContract.toFixed(1)}% to <${benchCO}%`, `Improve processing from ${procDays} days to <7 days`, `Capture 100% of legitimate out-of-scope work as COs`, `Prevent scope creep through better pre-construction documentation`] },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Implement Change Order Management',
+        items: [
+          'Formal change order process captures 100% of out-of-scope work (currently losing 30-50%)',
+          'Real-time tracking identifies scope creep before it erodes margins',
+          'Standard pricing for changes eliminates field-level discounting and giveaways',
+          'Documentation discipline reduces disputed changes by 60%+ (T&M vs. lump sum tracking)',
+          'Trend analysis reveals which clients/project types generate most changes — inform bid pricing',
+          'Quarterly change order review with project teams identifies process improvements',
+          'TOTAL IMPACT: Recover 2-5% of revenue currently lost to unmanaged scope changes',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Continue Without Tracking',
+        items: [
+          'Out-of-scope work performed without documentation = free work for the GC',
+          'Disputed changes without backup = write-offs (industry avg: 2-4% of contract value)',
+          'Field crews absorb scope creep silently — margins erode below the surface',
+          'No data to improve estimating — same scope gaps repeat project after project',
+          'Payment disputes increase when changes are undocumented — damages GC relationships',
+          'Year-end P&L surprise: margins 3-5% below estimates due to untracked changes',
+          'TOTAL COST: 2-5% of annual revenue lost to unmanaged change orders',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS',
+      items: [
+        'Change orders as % of contract: Industry average 5-15% for specialty trades',
+        'Capture rate: Top firms capture 90%+ of legitimate changes; poor performers capture <50%',
+        'Approval cycle: Best practice is 48-hour turnaround on change pricing',
+        'Markup on changes: 15-25% overhead + profit is standard for T&M and negotiated changes',
+        'Disputed change rate: Well-documented firms dispute <10% of changes (vs 30%+ for poor documentation)',
+        'Impact on margins: Firms with formal CO management maintain 2-3% higher margins on average',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 3: Change order process documented and field teams trained — capture rate improves immediately',
+        'MONTH 6: Formal tracking data available — first trend analysis identifies recurring scope gaps',
+        'MONTH 12: Estimating incorporates change order data — bid accuracy improves 5-10%',
+        'MONTH 18: Dispute rate drops below 15% — faster payment on approved changes',
+        'MONTH 24: Change order revenue properly captured adds 2-4% to blended margins',
+        'WITHOUT ACTION: Every project without change tracking is leaving money on the table',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Change Orders → Margins: Captured changes convert from cost to revenue — direct margin improvement',
+        'Change Orders → Cash Flow: Documented, approved changes get paid; undocumented work does not',
+        'Change Orders → Estimating: Historical change data improves future bid accuracy and contingency pricing',
+        'Change Orders → Client Relations: Professional change management builds trust (vs. surprise back-charges)',
+        'Change Orders → Legal: Documentation is the primary defense in construction disputes',
+        'Change Orders → Culture: Accountability for scope management drives operational discipline',
+      ],
+    },
   };
 }
 
@@ -1559,6 +2493,67 @@ export function calculateCrewUtilizationOptimizer(inputs: Record<string, any>): 
     ]},
     measurement: { title: 'MEASUREMENT:', items: [`Weekly utilization rate per crew (target: ${bench}%)`, `Idle hours per week (target: <${(total * 0.05 / 52).toFixed(0)} hours/week)`, `Rework rate by project and crew leader`, `Travel time per revenue dollar`, `Daily dispatch efficiency score`] },
     expectedOutcomes: { title: 'EXPECTED OUTCOMES:', items: [`Increase utilization from ${utilRate.toFixed(1)}% to ${bench}%`, `Recover ${fmt(gapRevenue)} in billable revenue annually`, `Reduce idle costs by ${fmt(idleCost * 0.5)}/year`, `Reduce rework costs by ${fmt(reworkCost * 0.6)}/year`, `Same crew size, better productivity = higher profit`] },
+
+    scenarioAnalysis: {
+      title: 'SCENARIO ANALYSIS',
+      ifActionTaken: {
+        title: 'IF ACTION TAKEN — Optimize Crew Deployment',
+        items: [
+          'Pre-staging materials and confirming site access eliminates majority of idle time',
+          'Quality checklists and crew briefings reduce rework by 40-60%',
+          'Route optimization and geographic job consolidation cuts travel time by 20-30%',
+          'Daily dispatch planning ensures every crew has productive work every hour',
+          'Same workforce produces 15-25% more billable output — no hiring needed',
+          'Training investment during slow periods builds capability for peak season',
+          'TOTAL IMPACT: 10-20% increase in billable revenue from existing crew within 6 months',
+        ],
+      },
+      ifNoAction: {
+        title: 'IF NO ACTION TAKEN — Continue Current Utilization Pattern',
+        items: [
+          'Idle time cost continues bleeding profit every day crews wait for materials or access',
+          'Rework compounds: defects not addressed become recurring quality patterns',
+          'Travel inefficiency = paying crews to drive instead of produce billable work',
+          'To grow revenue, must hire more crews (expensive) instead of optimizing existing ones',
+          'Competitors with better utilization bid lower and win — your overhead is their advantage',
+          'Crew frustration with idle time and disorganization drives turnover (replacement cost: $5-10K per craft worker)',
+          'TOTAL COST: Every percentage point below benchmark = thousands in lost annual revenue',
+        ],
+      },
+    },
+    industryBenchmarks: {
+      title: 'INDUSTRY BENCHMARKS (FMI/CFMA)',
+      items: [
+        'Billable utilization benchmark: 75-80% for well-managed specialty contractors',
+        'Top-quartile firms: 80%+ utilization with <5% idle time and <3% rework',
+        'Travel time benchmark: <10% of total crew hours for local operations',
+        'Rework benchmark: <3% for top performers (5-8% is industry average)',
+        'Training investment: Best firms allocate 5-7% of crew hours to skills development',
+        'Productivity multiplier: Each 5% utilization improvement = 15-20% profit increase (leveraged effect)',
+      ],
+    },
+    projections: {
+      title: 'FINANCIAL PROJECTIONS',
+      items: [
+        'MONTH 3: Pre-staging and site confirmation reduce idle time 30%+ — immediate cost savings',
+        'MONTH 6: Quality checklists cut rework in half — recovered hours become billable',
+        'MONTH 12: Full optimization — utilization reaches industry benchmark, revenue per crew up 15%',
+        'MONTH 18: Sustained improvement enables taking on additional projects without hiring',
+        'MONTH 24: Compounding effect — better utilization + retained workers + lower overhead = margin expansion',
+        'WITHOUT ACTION: Every month at current utilization is revenue left on the table',
+      ],
+    },
+    cascadingImpact: {
+      title: 'CASCADING BUSINESS IMPACT',
+      items: [
+        'Utilization → Revenue: Higher billable hours = more revenue from same payroll — pure profit leverage',
+        'Utilization → Margins: Fixed overhead spread over more billable hours = improved project margins',
+        'Utilization → Morale: Productive crews are satisfied crews — reduces industry-leading turnover rates',
+        'Utilization → Growth: Optimized crews handle more work — grow revenue without proportional hiring',
+        'Utilization → Safety: Organized, purposeful work reduces incidents vs. rushed or idle crews',
+        'Utilization → Cash Flow: More billable work = more invoiceable work = faster, larger collections',
+      ],
+    },
   };
 }
 

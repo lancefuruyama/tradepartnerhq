@@ -174,6 +174,78 @@ export default function ToolPage() {
       `;
     }
 
+    // Build scenario analysis HTML
+    let scenarioHTML = '';
+    if (results.scenarioAnalysis) {
+      const sa = results.scenarioAnalysis;
+      scenarioHTML = `
+        <div style="page-break-inside:avoid;">
+          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
+            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
+              ${sa.title || 'SCENARIO ANALYSIS'}
+            </h2>
+          </div>
+          ${sa.ifActionTaken ? `
+            <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:14px 16px;margin-bottom:12px;page-break-inside:avoid;">
+              <h3 style="color:#16a34a;font-size:12px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;">${sa.ifActionTaken.title || 'IF ACTION TAKEN'}</h3>
+              ${(sa.ifActionTaken.items || []).map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:2px 0 2px 12px;">+ ${item}</div>`).join('')}
+            </div>
+          ` : ''}
+          ${sa.ifNoAction ? `
+            <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:14px 16px;margin-bottom:8px;page-break-inside:avoid;">
+              <h3 style="color:#dc2626;font-size:12px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;">${sa.ifNoAction.title || 'IF NO ACTION TAKEN'}</h3>
+              ${(sa.ifNoAction.items || []).map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:2px 0 2px 12px;">- ${item}</div>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    // Build industry benchmarks HTML
+    let benchmarksHTML = '';
+    if (results.industryBenchmarks?.items) {
+      benchmarksHTML = `
+        <div style="page-break-inside:avoid;">
+          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
+            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
+              ${results.industryBenchmarks.title || 'INDUSTRY BENCHMARKS'}
+            </h2>
+          </div>
+          ${results.industryBenchmarks.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:4px;">* ${item}</div>`).join('')}
+        </div>
+      `;
+    }
+
+    // Build projections HTML
+    let projectionsHTML = '';
+    if (results.projections?.items) {
+      projectionsHTML = `
+        <div style="page-break-inside:avoid;">
+          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
+            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
+              ${results.projections.title || 'FINANCIAL PROJECTIONS'}
+            </h2>
+          </div>
+          ${results.projections.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:4px;">* ${item}</div>`).join('')}
+        </div>
+      `;
+    }
+
+    // Build cascading impact HTML
+    let cascadingHTML = '';
+    if (results.cascadingImpact?.items) {
+      cascadingHTML = `
+        <div style="page-break-inside:avoid;">
+          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
+            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
+              ${results.cascadingImpact.title || 'CASCADING BUSINESS IMPACT'}
+            </h2>
+          </div>
+          ${results.cascadingImpact.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:4px;">* ${item}</div>`).join('')}
+        </div>
+      `;
+    }
+
     // Build CTA box HTML
     const ctaHTML = `
       <div style="page-break-inside:avoid;background:#333;padding:20px 24px;margin-top:24px;text-align:center;border-radius:4px;">
@@ -227,6 +299,18 @@ export default function ToolPage() {
             ${expectedOutcomesHTML}
           </div>
         ` : ''}
+
+        <!-- Scenario Analysis -->
+        ${scenarioHTML ? `<div style="padding:0 32px 20px;">${scenarioHTML}</div>` : ''}
+
+        <!-- Industry Benchmarks -->
+        ${benchmarksHTML ? `<div style="padding:0 32px 20px;">${benchmarksHTML}</div>` : ''}
+
+        <!-- Projections -->
+        ${projectionsHTML ? `<div style="padding:0 32px 20px;">${projectionsHTML}</div>` : ''}
+
+        <!-- Cascading Impact -->
+        ${cascadingHTML ? `<div style="padding:0 32px 20px;">${cascadingHTML}</div>` : ''}
 
         <!-- CTA + Footer -->
         <div style="padding:0 32px 12px;">
@@ -529,6 +613,69 @@ export default function ToolPage() {
                     </li>
                   ))}
                 </ol>
+              </div>
+            )}
+
+            {/* Scenario Analysis */}
+            {results.scenarioAnalysis && (
+              <div className="bg-zinc-800 rounded-lg p-6">
+                <h3 className="text-xl font-bold mb-6">{results.scenarioAnalysis.title || 'Scenario Analysis'}</h3>
+                {results.scenarioAnalysis.ifActionTaken && (
+                  <div className="bg-green-900/20 border border-green-800 rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-bold text-green-400 uppercase mb-3">{results.scenarioAnalysis.ifActionTaken.title}</h4>
+                    <ul className="space-y-1">
+                      {results.scenarioAnalysis.ifActionTaken.items?.map((item: string, idx: number) => (
+                        <li key={idx} className="text-sm text-zinc-300 pl-3 border-l-2 border-green-700 py-0.5">{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {results.scenarioAnalysis.ifNoAction && (
+                  <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
+                    <h4 className="text-sm font-bold text-red-400 uppercase mb-3">{results.scenarioAnalysis.ifNoAction.title}</h4>
+                    <ul className="space-y-1">
+                      {results.scenarioAnalysis.ifNoAction.items?.map((item: string, idx: number) => (
+                        <li key={idx} className="text-sm text-zinc-300 pl-3 border-l-2 border-red-700 py-0.5">{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Industry Benchmarks */}
+            {results.industryBenchmarks?.items && results.industryBenchmarks.items.length > 0 && (
+              <div className="bg-zinc-800 rounded-lg p-6">
+                <h3 className="text-xl font-bold mb-4">{results.industryBenchmarks.title || 'Industry Benchmarks'}</h3>
+                <ul className="space-y-2">
+                  {results.industryBenchmarks.items.map((item: string, idx: number) => (
+                    <li key={idx} className="text-sm text-zinc-300 pl-3 border-l-2 border-amber-700 py-0.5">{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Projections */}
+            {results.projections?.items && results.projections.items.length > 0 && (
+              <div className="bg-zinc-800 rounded-lg p-6">
+                <h3 className="text-xl font-bold mb-4">{results.projections.title || 'Financial Projections'}</h3>
+                <ul className="space-y-2">
+                  {results.projections.items.map((item: string, idx: number) => (
+                    <li key={idx} className="text-sm text-zinc-300 pl-3 border-l-2 border-blue-700 py-0.5">{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Cascading Impact */}
+            {results.cascadingImpact?.items && results.cascadingImpact.items.length > 0 && (
+              <div className="bg-zinc-800 rounded-lg p-6">
+                <h3 className="text-xl font-bold mb-4">{results.cascadingImpact.title || 'Cascading Business Impact'}</h3>
+                <ul className="space-y-2">
+                  {results.cascadingImpact.items.map((item: string, idx: number) => (
+                    <li key={idx} className="text-sm text-zinc-300 pl-3 border-l-2 border-purple-700 py-0.5">{item}</li>
+                  ))}
+                </ul>
               </div>
             )}
 
