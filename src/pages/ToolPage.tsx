@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
-import { useState, useMemo, useEffect } from 'react';
-import { FileText, AlertCircle, Info, Building2, Lightbulb, ClipboardCopy, Check } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { Printer, AlertCircle, Info, Building2, Lightbulb, ClipboardCopy, Check } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { toolDefinitions } from '../data/toolDefinitions';
 import { calculateTool } from '../data/calculations';
@@ -33,6 +33,8 @@ export default function ToolPage() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const resultsEndRef = useRef<HTMLDivElement>(null);
+  const calendlyFiredRef = useRef(false);
 
   // Set unique page title per tool
   useEffect(() => {
@@ -41,6 +43,107 @@ export default function ToolPage() {
     }
     return () => { document.title = 'Trade Partner HQ — Free Business Intelligence for Specialty Contractors'; };
   }, [tool]);
+
+  // Reset Calendly flag when results change (new calculation)
+  useEffect(() => {
+    calendlyFiredRef.current = false;
+  }, [results]);
+
+  // Calendly popup when user scrolls to bottom of results
+  useEffect(() => {
+    if (!results || !resultsEndRef.current) return;
+    const el = resultsEndRef.current;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !calendlyFiredRef.current) {
+          calendlyFiredRef.current = true;
+          // Small delay so user sees the bottom content first
+          setTimeout(() => {
+            if ((window as any).Calendly) {
+              (window as any).Calendly.initPopupWidget({
+                url: 'https://calendly.com/lance-furuyama/tradepartnerhq',
+              });
+            }
+          }, 800);
+        }
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [results]);
+
+  // ─── Print Results ──────────────────────────────────────────
+  const printResults = () => {
+    if (!results || !tool) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow pop-ups to print your results.');
+      return;
+    }
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const sectionHead = (t: string) => `<h2 style="margin:18px 0 8px;font-size:16px;color:#b45309;border-bottom:2px solid #d97706;padding-bottom:4px;">${esc(t)}</h2>`;
+    const bulletList = (items: string[]) => `<ul style="margin:4px 0 12px 20px;">${items.map(i => `<li style="margin:3px 0;font-size:13px;">${esc(i)}</li>`).join('')}</ul>`;
+
+    const sections: string[] = [];
+    sections.push(`<h1 style="margin:0 0 4px;font-size:22px;">${esc(tool.name)}</h1>`);
+    sections.push(`<p style="color:#666;margin:0 0 16px;font-size:14px;">Company: <strong>${esc(formData.companyName || 'N/A')}</strong></p>`);
+
+    if (results.summary) { sections.push(sectionHead('Summary')); sections.push(`<p>${esc(results.summary)}</p>`); }
+
+    if (results.metrics?.length) {
+      sections.push(sectionHead('Key Metrics'));
+      sections.push(`<table style="border-collapse:collapse;width:100%;margin-bottom:12px;">${results.metrics.map((m: any) =>
+        `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px;">${esc(m.label)}</td><td style="padding:4px 0;font-weight:bold;font-size:13px;">${esc(m.value)}</td></tr>`
+      ).join('')}</table>`);
+    }
+
+    if (results.riskLevel) {
+      const colors: Record<string, string> = { Low: '#16a34a', Medium: '#ca8a04', High: '#ea580c', Critical: '#dc2626' };
+      sections.push(sectionHead('Risk Level'));
+      sections.push(`<p style="font-weight:bold;color:${colors[results.riskLevel] || '#666'};font-size:15px;">${esc(results.riskLevel)}</p>`);
+      if (results.riskMessage) sections.push(`<p style="font-size:13px;">${esc(results.riskMessage)}</p>`);
+    }
+
+    if (results.insight) { sections.push(sectionHead('Key Insight')); sections.push(`<p style="font-style:italic;">${esc(results.insight)}</p>`); }
+
+    if (results.detailedAnalysis?.sections) {
+      sections.push(sectionHead(results.detailedAnalysis.title || 'Detailed Analysis'));
+      results.detailedAnalysis.sections.forEach((s: any) => {
+        sections.push(`<h3 style="margin:10px 0 4px;font-size:14px;color:#b45309;">${esc(s.title)}</h3>`);
+        if (s.items?.length) sections.push(bulletList(s.items));
+      });
+    }
+
+    if (results.recommendations?.length) {
+      sections.push(sectionHead('Recommendations'));
+      sections.push(`<ol style="margin:4px 0 12px 20px;">${results.recommendations.map((r: string) => `<li style="margin:4px 0;font-size:13px;">${esc(r)}</li>`).join('')}</ol>`);
+    }
+
+    if (results.scenarioAnalysis) {
+      sections.push(sectionHead(results.scenarioAnalysis.title || 'Scenario Analysis'));
+      if (results.scenarioAnalysis.ifActionTaken) {
+        sections.push(`<h3 style="margin:8px 0 4px;font-size:14px;color:#16a34a;">✓ ${esc(results.scenarioAnalysis.ifActionTaken.title)}</h3>`);
+        if (results.scenarioAnalysis.ifActionTaken.items?.length) sections.push(bulletList(results.scenarioAnalysis.ifActionTaken.items));
+      }
+      if (results.scenarioAnalysis.ifNoAction) {
+        sections.push(`<h3 style="margin:8px 0 4px;font-size:14px;color:#dc2626;">✗ ${esc(results.scenarioAnalysis.ifNoAction.title)}</h3>`);
+        if (results.scenarioAnalysis.ifNoAction.items?.length) sections.push(bulletList(results.scenarioAnalysis.ifNoAction.items));
+      }
+    }
+
+    if (results.industryBenchmarks?.items?.length) { sections.push(sectionHead(results.industryBenchmarks.title || 'Industry Benchmarks')); sections.push(bulletList(results.industryBenchmarks.items)); }
+    if (results.projections?.items?.length) { sections.push(sectionHead(results.projections.title || 'Financial Projections')); sections.push(bulletList(results.projections.items)); }
+    if (results.cascadingImpact?.items?.length) { sections.push(sectionHead(results.cascadingImpact.title || 'Cascading Business Impact')); sections.push(bulletList(results.cascadingImpact.items)); }
+
+    sections.push(`<hr style="border:none;border-top:2px solid #e5e5e5;margin:20px 0 10px;"/>`);
+    sections.push(`<p style="color:#999;font-size:11px;">Generated by <a href="https://tradepartnerhq.com" style="color:#d97706;">Trade Partner HQ</a></p>`);
+
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>${esc(tool.name)} — ${esc(formData.companyName || 'Report')}</title><style>@media print{@page{margin:0.75in;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:700px;margin:0 auto;padding:20px;color:#222;">${sections.join('\n')}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); }, 300);
+  };
 
   if (!tool) {
     return (
@@ -261,355 +364,6 @@ export default function ToolPage() {
         setTimeout(() => setCopied(false), 2000);
       }
     }
-  };
-
-  // ─── Professional PDF Export ──────────────────────────────────
-  const exportAsPDF = async () => {
-    if (!results || !tool) return;
-
-    // Ensure html2pdf.js is loaded (dynamic fallback for slow mobile connections)
-    if (!(window as any).html2pdf) {
-      await new Promise<void>((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Failed to load PDF library'));
-        document.head.appendChild(script);
-      }).catch(() => {
-        alert('Could not load PDF library. Please check your connection and try again.');
-        return;
-      });
-    }
-
-    const companyName = formData.companyName || 'Your Company';
-    const now = new Date();
-    void now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-    // Page footer HTML (used on every page)
-    const pageFooter = `
-      <div style="display:flex;justify-content:space-between;padding:12px 32px;border-top:1px solid #ddd;font-size:10px;color:#999;page-break-inside:avoid;">
-        <span>TradePartnerHQ.com | Page <span class="page-number">1</span></span>
-        <span>calendly.com/lance-furuyama/tradepartnerhq</span>
-      </div>
-    `;
-
-    // Build detailed analysis sections HTML
-    let detailedAnalysisHTML = '';
-    if (results.detailedAnalysis?.sections) {
-      detailedAnalysisHTML = `
-        <div style="page-break-inside:avoid;">
-          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
-            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
-              ${results.detailedAnalysis.title || 'DETAILED ANALYSIS'}
-            </h2>
-          </div>
-          ${results.detailedAnalysis.subtitle ? `<p style="color:#666;font-size:11px;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;">${results.detailedAnalysis.subtitle}</p>` : ''}
-          ${results.detailedAnalysis.sections
-            .map(
-              (section: any) => `
-            <div style="margin-bottom:16px;page-break-inside:avoid;">
-              <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px;">${section.title}</h3>
-              ${section.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;">* ${item}</div>`).join('')}
-            </div>
-          `
-            )
-            .join('')}
-        </div>
-      `;
-    }
-
-    // Build action plan HTML
-    let actionPlanHTML = '';
-    if (results.actionPlan?.phases) {
-      actionPlanHTML = `
-        <div style="page-break-inside:avoid;">
-          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
-            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
-              ${results.actionPlan.title || 'ACTION PLAN'}
-            </h2>
-          </div>
-          ${results.actionPlan.subtitle ? `<p style="color:#666;font-size:11px;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.5px;">${results.actionPlan.subtitle}</p>` : ''}
-          ${results.actionPlan.phases
-            .map(
-              (phase: any) => `
-            <div style="margin-bottom:16px;page-break-inside:avoid;">
-              <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:0.5px;">${phase.title}</h3>
-              ${phase.description ? `<p style="color:#666;font-size:11px;margin:0 0 8px 0;line-height:1.5;">${phase.description}</p>` : ''}
-              ${phase.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;">* ${item}</div>`).join('')}
-            </div>
-          `
-            )
-            .join('')}
-        </div>
-      `;
-    }
-
-    // Build measurement section HTML
-    let measurementHTML = '';
-    if (results.measurement?.items) {
-      measurementHTML = `
-        <div style="page-break-inside:avoid;">
-          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;">
-            ${results.measurement.title || 'MEASUREMENT'}
-          </h3>
-          ${results.measurement.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:6px;">* ${item}</div>`).join('')}
-        </div>
-      `;
-    }
-
-    // Build expected outcomes section HTML
-    let expectedOutcomesHTML = '';
-    if (results.expectedOutcomes?.items) {
-      expectedOutcomesHTML = `
-        <div style="margin-top:16px;page-break-inside:avoid;">
-          <h3 style="color:#d97706;font-size:13px;font-weight:700;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;">
-            ${results.expectedOutcomes.title || 'EXPECTED OUTCOMES'}
-          </h3>
-          ${results.expectedOutcomes.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:6px;">* ${item}</div>`).join('')}
-        </div>
-      `;
-    }
-
-    // Build scenario analysis HTML
-    let scenarioHTML = '';
-    if (results.scenarioAnalysis) {
-      const sa = results.scenarioAnalysis;
-      scenarioHTML = `
-        <div style="page-break-inside:avoid;">
-          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
-            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
-              ${sa.title || 'SCENARIO ANALYSIS'}
-            </h2>
-          </div>
-          ${sa.ifActionTaken ? `
-            <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:14px 16px;margin-bottom:12px;page-break-inside:avoid;">
-              <h3 style="color:#16a34a;font-size:12px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;">${sa.ifActionTaken.title || 'IF ACTION TAKEN'}</h3>
-              ${(sa.ifActionTaken.items || []).map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:2px 0 2px 12px;">+ ${item}</div>`).join('')}
-            </div>
-          ` : ''}
-          ${sa.ifNoAction ? `
-            <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:14px 16px;margin-bottom:8px;page-break-inside:avoid;">
-              <h3 style="color:#dc2626;font-size:12px;font-weight:700;margin:0 0 8px 0;text-transform:uppercase;">${sa.ifNoAction.title || 'IF NO ACTION TAKEN'}</h3>
-              ${(sa.ifNoAction.items || []).map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:2px 0 2px 12px;">- ${item}</div>`).join('')}
-            </div>
-          ` : ''}
-        </div>
-      `;
-    }
-
-    // Build industry benchmarks HTML
-    let benchmarksHTML = '';
-    if (results.industryBenchmarks?.items) {
-      benchmarksHTML = `
-        <div style="page-break-inside:avoid;">
-          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
-            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
-              ${results.industryBenchmarks.title || 'INDUSTRY BENCHMARKS'}
-            </h2>
-          </div>
-          ${results.industryBenchmarks.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:4px;">* ${item}</div>`).join('')}
-        </div>
-      `;
-    }
-
-    // Build projections HTML
-    let projectionsHTML = '';
-    if (results.projections?.items) {
-      projectionsHTML = `
-        <div style="page-break-inside:avoid;">
-          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
-            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
-              ${results.projections.title || 'FINANCIAL PROJECTIONS'}
-            </h2>
-          </div>
-          ${results.projections.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:4px;">* ${item}</div>`).join('')}
-        </div>
-      `;
-    }
-
-    // Build cascading impact HTML
-    let cascadingHTML = '';
-    if (results.cascadingImpact?.items) {
-      cascadingHTML = `
-        <div style="page-break-inside:avoid;">
-          <div style="background:#d97706;padding:10px 16px;margin-bottom:16px;">
-            <h2 style="color:#fff;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.5px;">
-              ${results.cascadingImpact.title || 'CASCADING BUSINESS IMPACT'}
-            </h2>
-          </div>
-          ${results.cascadingImpact.items.map((item: string) => `<div style="color:#333;font-size:11px;line-height:1.6;padding:3px 0 3px 16px;margin-bottom:4px;">* ${item}</div>`).join('')}
-        </div>
-      `;
-    }
-
-    // Build CTA box HTML
-    const ctaHTML = `
-      <div style="page-break-inside:avoid;background:#333;padding:20px 24px;margin-top:24px;text-align:center;border-radius:4px;">
-        <p style="color:#d97706;font-size:16px;font-weight:700;margin:0 0 10px 0;">Ready to take action?</p>
-        <p style="color:#fff;font-size:12px;margin:0;">Book a free 30-min session:<br /><span style="color:#d97706;font-weight:700;">calendly.com/lance-furuyama/tradepartnerhq</span></p>
-      </div>
-    `;
-
-    // Build primary metrics HTML
-    const metricsHTML = (results.primaryMetrics || [])
-      .map(
-        (m: any) => `
-        <div style="background:#f8f8f8;border-left:3px solid #d97706;padding:12px 16px;margin-bottom:8px;page-break-inside:avoid;">
-          <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;font-weight:700;">${m.label}</div>
-          <div style="font-size:15px;font-weight:700;color:#1a1a1a;">${m.value}</div>
-          ${m.subtext ? `<div style="font-size:10px;color:#666;margin-top:2px;">${m.subtext}</div>` : ''}
-        </div>
-      `
-      )
-      .join('');
-
-    const pdfHTML = `
-      <div id="pdf-export" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1a1a1a;width:100%;margin:0;padding:0;background:#fff;">
-        <!-- Header -->
-        <div style="background:#1a1a1a;padding:28px 32px 20px;">
-          <h1 style="color:#fff;font-size:26px;font-weight:700;margin:0 0 6px 0;">${tool.name}</h1>
-          <p style="color:#999;font-size:13px;margin:0;">${companyName} - Trade Partner HQ Analysis</p>
-        </div>
-        <div style="background:#1a1a1a;height:2px;"></div>
-
-        <!-- Key Metrics -->
-        <div style="padding:24px 32px 12px;">
-          <h2 style="color:#d97706;font-size:15px;font-weight:700;margin:0 0 16px 0;text-transform:uppercase;letter-spacing:0.5px;">KEY METRICS</h2>
-          ${metricsHTML}
-        </div>
-
-        <!-- Detailed Analysis -->
-        <div style="padding:0 32px 20px;">
-          ${detailedAnalysisHTML}
-        </div>
-
-        <!-- Action Plan (flows naturally, no forced page break) -->
-        <div style="padding:0 32px 20px;">
-          ${actionPlanHTML}
-        </div>
-
-        <!-- Measurement + Expected Outcomes -->
-        ${measurementHTML || expectedOutcomesHTML ? `
-          <div style="padding:0 32px 20px;">
-            ${measurementHTML}
-            ${expectedOutcomesHTML}
-          </div>
-        ` : ''}
-
-        <!-- Scenario Analysis -->
-        ${scenarioHTML ? `<div style="padding:0 32px 20px;">${scenarioHTML}</div>` : ''}
-
-        <!-- Industry Benchmarks -->
-        ${benchmarksHTML ? `<div style="padding:0 32px 20px;">${benchmarksHTML}</div>` : ''}
-
-        <!-- Projections -->
-        ${projectionsHTML ? `<div style="padding:0 32px 20px;">${projectionsHTML}</div>` : ''}
-
-        <!-- Cascading Impact -->
-        ${cascadingHTML ? `<div style="padding:0 32px 20px;">${cascadingHTML}</div>` : ''}
-
-        <!-- CTA + Footer -->
-        <div style="padding:0 32px 12px;">
-          ${ctaHTML}
-        </div>
-        ${pageFooter}
-      </div>
-    `;
-
-    // Create a temporary container for html2pdf
-    // Fixed width ensures consistent PDF rendering on all viewports (desktop & mobile)
-    const container = document.createElement('div');
-    container.innerHTML = pdfHTML;
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
-    container.style.width = '800px';
-    document.body.appendChild(container);
-
-    const pdfElement = container.querySelector('#pdf-export');
-    const pdfFilename = `${tool.slug}-${companyName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
-
-    // Detect mobile/tablet (iOS Safari, Android Chrome, etc.)
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-      (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
-
-    if (pdfElement && (window as any).html2pdf) {
-      const worker = (window as any)
-        .html2pdf()
-        .set({
-          margin: [10, 0, 10, 0],
-          filename: pdfFilename,
-          image: { type: 'jpeg', quality: isMobile ? 0.92 : 0.98 },
-          html2canvas: {
-            scale: isMobile ? 1.5 : 2,
-            useCORS: true,
-            letterRendering: true,
-            logging: false,
-          },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['css', 'legacy'] },
-        })
-        .from(pdfElement);
-
-      if (isMobile) {
-        // Mobile: generate blob and open in new tab (works on iOS Safari + Android Chrome)
-        worker.outputPdf('blob').then((blob: Blob) => {
-          document.body.removeChild(container);
-          const blobUrl = URL.createObjectURL(blob);
-
-          // Try <a download> first (works on Android Chrome)
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = pdfFilename;
-          a.style.display = 'none';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-
-          // Fallback for iOS Safari: also open in new tab after short delay
-          // iOS Safari ignores <a download>, so opening the blob URL shows the PDF
-          // where the user can tap share → save/print
-          setTimeout(() => {
-            if (/iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-                (navigator.userAgent.includes('Mac') && 'ontouchend' in document)) {
-              window.open(blobUrl, '_blank');
-            } else {
-              URL.revokeObjectURL(blobUrl);
-            }
-          }, 500);
-        }).catch(() => {
-          document.body.removeChild(container);
-          alert('PDF generation failed. Please try again.');
-        });
-      } else {
-        // Desktop: standard save (creates <a download> internally)
-        worker.save().then(() => {
-          document.body.removeChild(container);
-        }).catch(() => {
-          document.body.removeChild(container);
-          alert('PDF generation failed. Please try again.');
-        });
-      }
-    } else {
-      document.body.removeChild(container);
-      // Fallback: plain text download
-      const content = `${tool.name}\n\n${JSON.stringify(results, null, 2)}`;
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${tool.slug}.txt`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    }
-  };
-
-  // Email gate wraps export — returning users skip the modal entirely
-  const handleExport = () => {
-    if (!results) {
-      alert('Please run the calculation first');
-      return;
-    }
-    emailGate.requestExport('pdf', exportAsPDF);
   };
 
   // @ts-ignore — dynamic icon lookup
@@ -927,11 +681,11 @@ export default function ToolPage() {
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3 pt-4">
               <button
-                onClick={() => handleExport()}
+                onClick={printResults}
                 className="flex-1 min-w-[140px] px-5 py-3 bg-zinc-800 border border-zinc-700 rounded-lg hover:bg-zinc-700 transition-colors font-medium flex items-center justify-center gap-2"
               >
-                <FileText className="w-5 h-5" />
-                Export PDF
+                <Printer className="w-5 h-5" />
+                Print
               </button>
               <button
                 onClick={copyToClipboard}
@@ -954,6 +708,9 @@ export default function ToolPage() {
                 Recalculate
               </button>
             </div>
+
+            {/* Sentinel for Calendly popup trigger */}
+            <div ref={resultsEndRef} className="h-1" />
           </div>
         )}
       </div>
