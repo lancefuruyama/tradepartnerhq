@@ -321,10 +321,12 @@ export default function ToolPage() {
     `;
 
     // Create a temporary container for html2pdf
+    // Fixed width ensures consistent PDF rendering on all viewports (desktop & mobile)
     const container = document.createElement('div');
     container.innerHTML = pdfHTML;
     container.style.position = 'absolute';
     container.style.left = '-9999px';
+    container.style.width = '800px';
     document.body.appendChild(container);
 
     const pdfElement = container.querySelector('#pdf-export');
