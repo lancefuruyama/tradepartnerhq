@@ -3,6 +3,75 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Free business intelligence tools for specialty contractors \u2014 cash flow analyzers, bid calculators, overhead recovery, workforce planning, and more. Built for trade partners doing $5M+ in annual revenue." />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Trade Partner HQ \u2014 Free Toolkit for Specialty Contractors" />
+    <meta property="og:description" content="16 free calculators and analyzers built for subcontractors, specialty trades, and construction businesses. No login required." />
+    <meta property="og:url" content="https://tradepartnerhq.com" />
+    <meta property="og:site_name" content="Trade Partner HQ" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Trade Partner HQ \u2014 Free Toolkit for Specialty Contractors" />
+    <meta name="twitter:description" content="16 free calculators and analyzers built for subcontractors, specialty trades, and construction businesses." />
+
+    <title>Trade Partner HQ \u2014 Free Business Intelligence for Specialty Contractors</title>
+
+    <!-- Leaflet CSS (events map) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
+    <!-- Calendly widget CSS + JS -->
+    <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet" />
+    <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+
+  </head>
+  <body style="background-color:#18181b">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- TPHQ Analytics \u2014 Event-level tracking via Supabase -->
+    <script>
+    (function(){
+      'use strict';
+      var SU='https://ycgyfukhxxtitrbkotpj.supabase.co';
+      var SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ3lmdWtoeHh0aXRyYmtvdHBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzcyOTEsImV4cCI6MjA4OTc1MzI5MX0.3oe0JiWrSOF7NDhT8EQswBaQR1Qn1x_q9vrnYaN0Y6s';
+      var H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK,'Prefer':'return=minimal'};
+      var sid=sessionStorage.getItem('tphq_sid');
+      if(!sid){sid=Math.random().toString(36).substring(2)+Date.now().toString(36);sessionStorage.setItem('tphq_sid',sid);}
+      function post(data){data.session_id=sid;fetch(SU+'/rest/v1/analytics_events',{method:'POST',headers:H,body:JSON.stringify(data),keepalive:true}).catch(function(){});}
+      function gp(){var h=location.hash||'#/';return h.replace(/^#/,'')||'/';}
+      var lp='';
+      function tv(){var p=gp();if(p===lp)return;lp=p;post({event_type:'page_view',page:p,metadata:{referrer:document.referrer||null,screen_width:window.innerWidth,search:location.search||''}});}
+      tv();
+      window.addEventListener('hashchange',function(){tv();});
+      window.tphqTrack=function(t,meta){post({event_type:t,page:gp(),metadata:meta||{}});};
+      document.addEventListener('click',function(e){
+        var el=e.target.closest('a,button,[data-track],[role="button"]');
+        if(!el)return;
+        if(el.dataset.track){window.tphqTrack(el.dataset.track,{label:el.dataset.trackLabel||el.textContent.trim().substring(0,80),category:el.dataset.trackCategory||'interaction'});return;}
+        if(el.tagName==='BUTTON'||el.role==='button'||el.classList.contains('cta')||el.classList.contains('btn')){var t=el.textContent.trim().substring(0,80);if(t)window.tphqTrack('button_click',{label:t,category:'cta'});}
+        if(el.tagName==='A'&&el.href){
+          if(el.hostname!==location.hostname)window.tphqTrack('outbound_click',{label:el.href,category:'link'});
+          var hr=el.getAttribute('href')||'';
+          if(hr.includes('#/toolkit/'))window.tphqTrack('tool_open',{label:hr.split('#/toolkit/')[1],category:'toolkit'});
+          if(hr.includes('#/events'))window.tphqTrack('events_page',{label:'events',category:'navigation'});
+        }
+        if(el.closest('[onclick*="Calendly"],[data-url*="calendly"]')||(el.textContent&&el.textContent.toLowerCase().includes('consultation')))window.tphqTrack('calendly_open',{label:el.textContent.trim().substring(0,80),category:'conversion'});
+      });
+      document.addEventListener('mousedown',function(e){if(e.target.closest('.leaflet-container'))window.tphqTrack('map_interaction',{category:'map'});});
+      document.addEventListener('submit',function(e){window.tphqTrack('form_submit',{label:e.target.id||'unknown',category:'conversion'});});
+      var sm={};window.addEventListener('scroll',function(){var p=Math.round(100*(window.scrollY+window.innerHeight)/document.body.scrollHeight);[25,50,75,100].forEach(function(m){if(p>=m&&!sm[gp()+m]){sm[gp()+m]=true;window.tphqTrack('scroll_depth',{label:m+'%',value:m,category:'engagement'});}});},{passive:true});
+    })();
+    </script>
+  </body>
+</html><!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Free business intelligence tools for specialty contractors — cash flow analyzers, bid calculators, overhead recovery, workforce planning, and more. Built for trade partners doing $5M+ in annual revenue." />
     <meta name="robots" content="index, follow" />
 
